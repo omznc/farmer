@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  /* user-select: none; */
+}
+
+body {
+  @apply bg-bg text-fg antialiased;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+kbd {
+  @apply font-mono text-xs px-1 py-0.5 bg-bg-tertiary border border-border rounded-sm;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-bg-secondary;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border-hover rounded-sm;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-inactive;
+}
+
+/* Titlebar drag region */
+*[data-tauri-drag-region] {
+  app-region: drag;
+}
+
+button {
+  app-region: no-drag;
+}
+
+select option {
+  @apply bg-bg-tertiary text-fg-primary;
+}
+
+select {
+  color-scheme: dark;
+}
+

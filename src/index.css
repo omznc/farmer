@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1c1c1c;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #383838;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #505050;
+}
+
+::-webkit-scrollbar-corner {
+  background: #1c1c1c;
+}
+
+/* Base styles */
+body {
+  @apply text-text-primary antialiased;
+  background: transparent;
+}
+
+#root {
+  @apply bg-bg-primary;
+}
+
+/* Titlebar drag region */
+*[data-tauri-drag-region] {
+  app-region: drag;
+}
+
+button {
+  app-region: no-drag;
+}
