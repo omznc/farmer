@@ -1,3 +1,4 @@
+import { getVersion } from "@tauri-apps/api/app";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import {
 	AlertCircle,
@@ -26,9 +27,13 @@ export function AboutView() {
 	const { logs, clearLogs, exportLogs } = useConsoleCapture(500);
 	const [showLogs, setShowLogs] = useState(false);
 	const [copySuccess, setCopySuccess] = useState(false);
+	const [currentVersion, setCurrentVersion] = useState<string>("");
 	const logsEndRef = useRef<HTMLDivElement>(null);
 
-	const currentVersion = "0.1.1";
+	// Fetch version from Tauri config
+	useEffect(() => {
+		getVersion().then(setCurrentVersion).catch(console.error);
+	}, []);
 
 	// Auto-scroll to bottom when new logs arrive
 	useEffect(() => {

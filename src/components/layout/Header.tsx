@@ -1,4 +1,4 @@
-import { BarChart3, Folder, Settings } from "lucide-react";
+import { Folder, Info, Settings } from "lucide-react";
 import { useAppStore } from "../../stores/appStore";
 
 export function Header() {
@@ -10,6 +10,8 @@ export function Header() {
 				return "Repository Analysis";
 			case "settings":
 				return "Settings";
+			case "about":
+				return "About";
 			default:
 				return "Farmer";
 		}
@@ -21,8 +23,10 @@ export function Header() {
 				return Folder;
 			case "settings":
 				return Settings;
+			case "about":
+				return Info;
 			default:
-				return BarChart3;
+				return Folder;
 		}
 	};
 
