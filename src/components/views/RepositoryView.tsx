@@ -7,7 +7,7 @@ import {
 	startOfWeek,
 	subWeeks,
 } from "date-fns";
-import { Calendar, Clock, FolderOpen, RefreshCw } from "lucide-react";
+import { Calendar, Clock, FolderOpen, RefreshCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAppStore } from "../../stores/appStore";
 import type { Commit, WorkDay } from "../../types";
@@ -63,6 +63,9 @@ export function RepositoryView() {
 	const activeRepos = useAppStore((state) => state.activeRepos);
 	const toggleActiveRepo = useAppStore((state) => state.toggleActiveRepo);
 	const addRepoToHistory = useAppStore((state) => state.addRepoToHistory);
+	const removeRepoFromHistory = useAppStore(
+		(state) => state.removeRepoFromHistory,
+	);
 	const isLoading = useAppStore((state) => state.isLoading);
 	const setLoading = useAppStore((state) => state.setLoading);
 	const setError = useAppStore((state) => state.setError);
@@ -502,6 +505,13 @@ export function RepositoryView() {
 											{name}
 										</span>
 									)}
+									<button
+										onClick={() => removeRepoFromHistory(path)}
+										className="p-1 text-fg-muted hover:text-error hover:bg-error/10 rounded transition-colors flex-shrink-0"
+										title="Remove from history"
+									>
+										<Trash2 className="w-4 h-4" />
+									</button>
 								</div>
 							);
 						})}

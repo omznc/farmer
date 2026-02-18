@@ -7,6 +7,7 @@ interface AppStore extends AppState {
 	setCurrentView: (view: AppState["currentView"]) => void;
 	setRepoPath: (path: string | null) => void;
 	addRepoToHistory: (path: string) => void;
+	removeRepoFromHistory: (path: string) => void;
 	toggleActiveRepo: (path: string) => void;
 	setActiveRepos: (paths: string[]) => void;
 	setFilterByGitAuthors: (filter: boolean) => void;
@@ -62,6 +63,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
 			10,
 		);
 		set({ repoHistory: newHistory });
+		get().saveSettings();
+	},
+	removeRepoFromHistory: (path) => {
+		const history = get().repoHistory;
+		const activeRepos = get().activeRepos;
+		set({
+			repoHistory: history.filter((p) => p !== path),
+			activeRepos: activeRepos.filter((p) => p !== path),
+		});
 		get().saveSettings();
 	},
 	toggleActiveRepo: (path) => {
