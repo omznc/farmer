@@ -83,8 +83,8 @@ jobs:
               run: |
                   mkdir -p target/release/bundle/deb
                   gh release download v${{ steps.version.outputs.version }} --pattern "Farmer_*_amd64.deb" --dir target/release/bundle/deb/
+                  mv target/release/bundle/deb/Farmer_*_amd64.deb target/release/bundle/deb/Farmer_amd64.deb
                   ls -la target/release/bundle/deb/
-                  mv target/release/bundle/deb/Farmer_*_amd64.deb target/release/bundle/deb/farmer_${{ steps.version.outputs.version }}_amd64.deb || true
 
             - name: Install flatpak-builder
               run: |

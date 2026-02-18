@@ -1,22 +1,18 @@
 id: com.omznc.farmer
 
 runtime: org.gnome.Platform
-runtime-version: '47'
+runtime-version: '48'
 sdk: org.gnome.Sdk
 
 command: farmer
 
 finish-args:
-  # Window display
   - --socket=wayland
   - --socket=fallback-x11
   - --device=dri
   - --share=ipc
-  # Network access for AI APIs and updates
   - --share=network
-  # File system access for git repositories
   - --filesystem=home
-  # D-Bus access for desktop integration
   - --talk-name=org.freedesktop.Notifications
 
 modules:
@@ -24,43 +20,30 @@ modules:
     buildsystem: simple
 
     sources:
-      # Metainfo for AppStream metadata
       - type: file
         path: metainfo.xml
-      # The deb package from release
       - type: file
-        path: ../target/release/bundle/deb/farmer_0.1.5_amd64.deb
+        path: ../target/release/bundle/deb/Farmer_amd64.deb
         only-arches: [x86_64]
+        dest-filename: farmer.deb
       - type: file
-        path: ../target/release/bundle/deb/farmer_0.1.5_arm64.deb
+        path: ../target/release/bundle/deb/Farmer_arm64.deb
         only-arches: [aarch64]
+        dest-filename: farmer.deb
 
     build-commands:
       - set -e
-
-      # Extract the deb package
       - mkdir deb-extract
       - ar -x *.deb --output deb-extract
       - tar -C deb-extract -xf deb-extract/data.tar.gz
-
-      # Copy binary
       - install -Dm755 deb-extract/usr/bin/farmer /app/bin/farmer
-
-      # Copy bundled libraries if present
       - |
-        if [ -d deb-extract/usr/lib/farmer ]; then
-          mkdir -p /app/lib/farmer
-          cp -r deb-extract/usr/lib/farmer/. /app/lib/farmer
-          find /app/lib/farmer -type f -exec chmod 644 {} \;
+        if [ -d deb-extract/usr/lib/Farmer ]; then
+          mkdir -p /app/lib/Farmer
+          cp -r deb-extract/usr/lib/Farmer/. /app/lib/Farmer
+          find /app/lib/Farmer -type f -exec chmod 644 {} \;
         fi
-
-      # Copy desktop file
-      - |
-        if [ -f deb-extract/usr/share/applications/com.omznc.farmer.desktop ]; then
-          install -Dm644 deb-extract/usr/share/applications/com.omznc.farmer.desktop /app/share/applications/com.omznc.farmer.desktop
-        fi
-
-      # Copy icons
+      - install -Dm644 deb-extract/usr/share/applications/Farmer.desktop /app/share/applications/com.omznc.farmer.desktop
       - |
         for size in 32 128 256; do
           icon_path="deb-extract/usr/share/icons/hicolor/${size}x${size}/apps/farmer.png"
@@ -68,13 +51,10 @@ modules:
             install -Dm644 "$icon_path" "/app/share/icons/hicolor/${size}x${size}/apps/com.omznc.farmer.png"
           fi
         done
-        # Also check for @2x versions
-        for size in 128; do
+        for size in 128 256; do
           icon_path="deb-extract/usr/share/icons/hicolor/${size}x${size}@2/apps/farmer.png"
           if [ -f "$icon_path" ]; then
             install -Dm644 "$icon_path" "/app/share/icons/hicolor/${size}x${size}@2/apps/com.omznc.farmer.png"
           fi
         done
-
-      # Copy metainfo
       - install -Dm644 metainfo.xml /app/share/metainfo/com.omznc.farmer.metainfo.xml
