@@ -48,13 +48,25 @@ modules:
         for size in 32 128 256; do
           icon_path="deb-extract/usr/share/icons/hicolor/${size}x${size}/apps/farmer.png"
           if [ -f "$icon_path" ]; then
-            install -Dm644 "$icon_path" "/app/share/icons/hicolor/${size}x${size}/apps/com.omznc.farmer.png"
+            install -Dm644 "$icon_path" "/app/share/icons/hicolor/${size}x${size}/apps/farmer.png"
           fi
         done
         for size in 128 256; do
           icon_path="deb-extract/usr/share/icons/hicolor/${size}x${size}@2/apps/farmer.png"
           if [ -f "$icon_path" ]; then
-            install -Dm644 "$icon_path" "/app/share/icons/hicolor/${size}x${size}@2/apps/com.omznc.farmer.png"
+            install -Dm644 "$icon_path" "/app/share/icons/hicolor/${size}x${size}@2/apps/farmer.png"
           fi
         done
       - install -Dm644 metainfo.xml /app/share/metainfo/com.omznc.farmer.metainfo.xml
+      - |
+        sed -i 's/^Icon=.*/Icon=com.omznc.farmer/' /app/share/applications/com.omznc.farmer.desktop
+        for size in 32 128 256; do
+          if [ -f "/app/share/icons/hicolor/${size}x${size}/apps/farmer.png" ]; then
+            mv "/app/share/icons/hicolor/${size}x${size}/apps/farmer.png" "/app/share/icons/hicolor/${size}x${size}/apps/com.omznc.farmer.png"
+          fi
+        done
+        for size in 128 256; do
+          if [ -f "/app/share/icons/hicolor/${size}x${size}@2/apps/farmer.png" ]; then
+            mv "/app/share/icons/hicolor/${size}x${size}@2/apps/farmer.png" "/app/share/icons/hicolor/${size}x${size}@2/apps/com.omznc.farmer.png"
+          fi
+        done
