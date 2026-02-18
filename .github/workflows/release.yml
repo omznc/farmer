@@ -82,9 +82,9 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   mkdir -p src-tauri/target/release/bundle/deb
-                  gh release download v${{ steps.version.outputs.version }} --pattern "farmer_*_amd64.deb" --dir src-tauri/target/release/bundle/deb/
+                  gh release download v${{ steps.version.outputs.version }} --pattern "Farmer_*_amd64.deb" --dir src-tauri/target/release/bundle/deb/
                   ls -la src-tauri/target/release/bundle/deb/
-                  mv src-tauri/target/release/bundle/deb/farmer_*_amd64.deb src-tauri/target/release/bundle/deb/farmer_${{ steps.version.outputs.version }}_amd64.deb || true
+                  mv src-tauri/target/release/bundle/deb/Farmer_*_amd64.deb src-tauri/target/release/bundle/deb/farmer_${{ steps.version.outputs.version }}_amd64.deb || true
 
             - name: Install flatpak-builder
               run: |
