@@ -68,17 +68,23 @@ jobs:
         runs-on: ubuntu-24.04
         permissions:
             contents: write
-        strategy:
-            matrix:
-                arch: [x86_64]
         steps:
             - uses: actions/checkout@v4
 
-            - name: Download deb artifact
-              uses: actions/download-artifact@v4
-              with:
-                  name: ubuntu-24.04-deb
-                  path: src-tauri/target/release/bundle/deb/
+            - name: Get version
+              id: version
+              run: |
+                  VERSION=$(grep '"version"' src-tauri/tauri.conf.json | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+                  echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+            - name: Download deb from release
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  mkdir -p src-tauri/target/release/bundle/deb
+                  gh release download v${{ steps.version.outputs.version }} --pattern "farmer_*_amd64.deb" --dir src-tauri/target/release/bundle/deb/
+                  ls -la src-tauri/target/release/bundle/deb/
+                  mv src-tauri/target/release/bundle/deb/farmer_*_amd64.deb src-tauri/target/release/bundle/deb/farmer_${{ steps.version.outputs.version }}_amd64.deb || true
 
             - name: Install flatpak-builder
               run: |
@@ -89,7 +95,7 @@ jobs:
             - name: Build Flatpak
               working-directory: src-tauri
               run: |
-                  flatpak-builder --user --install-deps-from=flathub --arch=${{ matrix.arch }} --force-clean build-dir flatpak-builder.yaml
+                  flatpak-builder --user --install-deps-from=flathub --arch=x86_64 --force-clean build-dir flatpak-builder.yaml
                   flatpak-builder --user --repo=repo --force-clean build-dir flatpak-builder.yaml
                   flatpak build-bundle repo farmer.flatpak com.omznc.farmer
 
@@ -97,6 +103,7 @@ jobs:
               uses: softprops/action-gh-release@v2
               with:
                   files: src-tauri/farmer.flatpak
+                  tag_name: v${{ steps.version.outputs.version }}
                   draft: true
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
