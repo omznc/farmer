@@ -1,6 +1,6 @@
 [package]
 name = "farmer"
-version = "0.1.0"
+version = "0.1.6"
 description = "Git-powered time tracking desktop application"
 authors = ["omznc"]
 edition = "2021"
