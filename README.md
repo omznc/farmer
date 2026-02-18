@@ -107,19 +107,6 @@ By default, Farmer filters commits to only show those from configured git author
    - Verify your name and email are listed
    - Or disable "Filter by git authors" checkbox in the Repository view
 
-3. For test repositories:
-   ```bash
-   # Make sure commits are authored by your configured user
-   cd test-local-repo
-   git log --pretty=format:"%an <%ae>"  # Check commit authors
-   ```
-
-**Local Repositories (without remotes):**
-- ✅ Fully supported! Local repos work exactly like remote repos
-- 📍 Local repos show a pin emoji to indicate they have no remote
-- All features work: commit display, AI summaries, copy to clipboard
-
-
 ### Building
 
 ```bash
@@ -137,80 +124,5 @@ bun run lint        # Biome
 bun run lint:fix    # Biome with auto-fix
 ```
 
-## Releasing
 
-Releases are automated via GitHub Actions. Follow these steps:
-
-### 1. Update Version Number
-
-Edit `src-tauri/tauri.conf.json` and update the version:
-
-```json
-{
-  "version": "0.2.0"  // Update this
-}
-```
-
-### 2. Commit and Push to Release Branch
-
-```bash
-# Commit the version change
-git add src-tauri/tauri.conf.json
-git commit -m "chore: bump version to 0.2.0"
-
-# Push to the release branch
-git push origin main:release
-```
-
-**Alternative**: If you're already on a different branch:
-```bash
-git checkout -b release-0.2.0
-git add src-tauri/tauri.conf.json
-git commit -m "chore: bump version to 0.2.0"
-git push origin release-0.2.0:release
-```
-
-### 3. Monitor the Build
-
-1. Go to the [Actions tab](https://github.com/omznc/farmer/actions) on GitHub
-2. Watch the "Release" workflow run
-3. It will build for all platforms (macOS Intel, macOS ARM, Linux x64, Linux ARM64, Windows x64)
-4. Build time: approximately 10-20 minutes
-
-### 4. Publish the Release
-
-1. Once the workflow completes, go to [Releases](https://github.com/omznc/farmer/releases)
-2. You'll see a new **draft release** with version `v0.2.0`
-3. Review the assets (all platform builds should be attached)
-4. Edit the release notes if needed
-5. Click **"Publish release"**
-
-### 5. Verify Auto-Update
-
-The app has built-in auto-update functionality. Users running previous versions will be notified of the update automatically.
-
-### Troubleshooting Releases
-
-- **Build fails**: Check the Actions logs for the specific platform that failed
-- **Missing assets**: Ensure all platform builds completed successfully
-- **Version conflict**: Make sure the version in `tauri.conf.json` is higher than the last release
-- **Signing issues**: Verify `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` secrets are set
-
-### Manual Workflow Trigger
-
-You can also trigger a release manually:
-
-1. Go to [Actions](https://github.com/omznc/farmer/actions)
-2. Select the "Release" workflow
-3. Click "Run workflow"
-4. Choose the branch and click "Run workflow"
-
-## Tech Stack
-
-- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, Zustand
-- **Backend**: Rust, Tauri 2
-- **Git**: git2 (Rust)
-
-## License
-
-MIT
+MIT License
