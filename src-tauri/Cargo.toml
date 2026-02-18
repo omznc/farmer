@@ -25,7 +25,7 @@ chrono = { version = "0.4", features = ["serde"] }
 dirs = "5.0"
 thiserror = "2.0"
 anyhow = "1.0"
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 tauri-plugin-clipboard-manager = "2.3.2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
