@@ -2,6 +2,8 @@
 
 A git-powered time tracking desktop application built with Tauri.
 
+<img width="1820" height="1077" alt="Screenshot From 2026-02-18 16-08-54" src="https://github.com/user-attachments/assets/7f9eda92-9628-4409-8681-380279e9c974" />
+
 ## Features
 
 - **Git Analysis**: Automatically analyze your git commits to track work activity
