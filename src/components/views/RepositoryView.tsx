@@ -49,7 +49,7 @@ export function getRepoColor(index: number) {
 }
 
 function getRepoName(path: string): string {
-	const parts = path.split("/");
+	const parts = path.split(/[\\/]/);
 	return parts[parts.length - 1] || path;
 }
 
@@ -93,19 +93,23 @@ export function RepositoryView() {
 				const authorsToUse = shouldFilter ? gitAuthors : [];
 
 				console.log("[Repository] Analyzing repos:", paths);
+				console.log("[Repository] Filter by authors:", shouldFilter, "Authors:", authorsToUse);
 
 				const commitsByDate = new Map<string, Commit[]>();
 
 				for (const path of paths) {
 					try {
+						console.log("[Repository] Analyzing path:", path);
 						const days = await invoke<WorkDay[]>("analyze_repository", {
 							repoPath: path,
 							gitAuthors: authorsToUse,
 						});
 
+						console.log(`[Repository] Got ${days.length} work days from ${path}`);
 						const repoName = getRepoName(path);
 
 						for (const day of days) {
+							console.log(`[Repository] Processing day ${day.date} with ${day.commits.length} commits`);
 							const commitsWithRepo = day.commits.map((c) => ({
 								...c,
 								repoPath: path,
@@ -115,10 +119,13 @@ export function RepositoryView() {
 							const existing = commitsByDate.get(day.date) || [];
 							commitsByDate.set(day.date, [...existing, ...commitsWithRepo]);
 						}
+						console.log(`[Repository] Successfully processed ${path}`);
 					} catch (e) {
-						console.error(`Failed to analyze ${path}:`, e);
+						console.error(`[Repository] Failed to analyze ${path}:`, e);
 					}
 				}
+
+				console.log(`[Repository] Total dates with commits: ${commitsByDate.size}`);
 
 				const mergedWorkDays: WorkDay[] = [];
 				commitsByDate.forEach((commits, date) => {
@@ -152,6 +159,7 @@ export function RepositoryView() {
 					(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
 				);
 
+				console.log(`[Repository] Setting ${mergedWorkDays.length} work days with ${mergedWorkDays.reduce((sum, day) => sum + day.totalCommits, 0)} total commits`);
 				setWorkDays(mergedWorkDays);
 
 				if (paths.length === 1) {

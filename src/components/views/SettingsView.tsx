@@ -36,21 +36,25 @@ export function SettingsView() {
 		setIsDiscovering(true);
 		try {
 			const discovered = await discoverProviders();
-			const existingIds = aiConfig.providers.map((p) => p.id);
+			// Read fresh state from store to avoid stale closure
+			const currentConfig = useAppStore.getState().aiConfig;
+			const existingIds = currentConfig.providers.map((p) => p.id);
 			const newProviders = discovered.filter(
 				(p) => !existingIds.includes(p.id),
 			);
 
-			setAIConfig({
-				...aiConfig,
-				providers: [...aiConfig.providers, ...newProviders],
-			});
+			if (newProviders.length > 0) {
+				setAIConfig({
+					...currentConfig,
+					providers: [...currentConfig.providers, ...newProviders],
+				});
+			}
 		} catch (error) {
 			console.error("Failed to discover providers:", error);
 		} finally {
 			setIsDiscovering(false);
 		}
-	}, [aiConfig, setAIConfig]);
+	}, [setAIConfig]);
 
 	useEffect(() => {
 		const loadGitConfig = async () => {

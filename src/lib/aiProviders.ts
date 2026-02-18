@@ -1,6 +1,19 @@
 import { Command } from "@tauri-apps/plugin-shell";
 import type { AIProvider } from "../types";
 
+async function commandExists(command: string): Promise<boolean> {
+	try {
+		// Use 'where' on Windows, 'which' on Unix
+		const checkCmd = navigator.platform.toLowerCase().includes("win")
+			? "where"
+			: "which";
+		const output = await Command.create(checkCmd, [command]).execute();
+		return output.code === 0;
+	} catch {
+		return false;
+	}
+}
+
 export async function discoverProviders(): Promise<AIProvider[]> {
 	const providers: AIProvider[] = [];
 
@@ -17,45 +30,29 @@ export async function discoverProviders(): Promise<AIProvider[]> {
 }
 
 async function checkClaudeCode(): Promise<AIProvider | null> {
-	try {
-		const command = Command.create("which", ["claude"]);
-		const output = await command.execute();
-		if (output.code === 0) {
-			return {
-				id: "claude-code",
-				type: "claude-code",
-				name: "Claude Code",
-				enabled: false,
-				config: {
-					command: "claude",
-				},
-			};
-		}
-	} catch {
-		// Not available
-	}
-	return null;
+	if (!(await commandExists("claude"))) return null;
+	return {
+		id: "claude-code",
+		type: "claude-code",
+		name: "Claude Code",
+		enabled: false,
+		config: {
+			command: "claude",
+		},
+	};
 }
 
 async function checkOpenCode(): Promise<AIProvider | null> {
-	try {
-		const command = Command.create("which", ["opencode"]);
-		const output = await command.execute();
-		if (output.code === 0) {
-			return {
-				id: "opencode",
-				type: "opencode",
-				name: "OpenCode",
-				enabled: false,
-				config: {
-					command: "opencode",
-				},
-			};
-		}
-	} catch {
-		// Not available
-	}
-	return null;
+	if (!(await commandExists("opencode"))) return null;
+	return {
+		id: "opencode",
+		type: "opencode",
+		name: "OpenCode",
+		enabled: false,
+		config: {
+			command: "opencode",
+		},
+	};
 }
 
 async function checkOllama(): Promise<AIProvider | null> {

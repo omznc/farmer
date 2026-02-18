@@ -4,7 +4,9 @@ use std::collections::HashMap;
 pub fn get_remote_url(repo_path: &str) -> Option<String> {
     let repo = git2::Repository::open(repo_path).ok()?;
     let remote = repo.find_remote("origin").ok()?;
-    remote.url().map(|s| s.to_string())
+    let url = remote.url().map(|s| s.to_string());
+    println!("Repository '{}' remote URL: {:?}", repo_path, url);
+    url
 }
 
 pub fn analyze_repository(
@@ -26,9 +28,10 @@ pub fn analyze_repository(
     let three_months_ago = chrono::Utc::now() - chrono::Duration::days(90);
 
     let should_filter = !git_authors.is_empty();
-    
+
     let remote_url = get_remote_url(&repo_path);
-    println!("Remote URL for repo: {:?}", remote_url);
+    println!("Analyzing repository: {} (remote: {:?}, filtering: {})",
+             repo_path, remote_url.as_deref().unwrap_or("none"), should_filter);
 
     for oid in revwalk {
         let oid = oid.map_err(|e| format!("Invalid OID: {}", e))?;
@@ -72,7 +75,15 @@ pub fn analyze_repository(
         });
     }
 
+    println!("Found {} commits for repository: {}", commits.len(), repo_path);
+
+    if commits.is_empty() {
+        println!("Warning: No commits found in repository: {}", repo_path);
+        return Ok(Vec::new());
+    }
+
     let work_days = group_commits_by_workday(commits);
+    println!("Grouped into {} work days for repository: {}", work_days.len(), repo_path);
     Ok(work_days)
 }
 
