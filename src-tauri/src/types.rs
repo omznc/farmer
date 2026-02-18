@@ -67,4 +67,22 @@ pub struct AIConfig {
     pub providers: Vec<AIProvider>,
     #[serde(rename = "selectedProvider")]
     pub selected_provider: Option<String>,
+    #[serde(rename = "customPrompt")]
+    pub custom_prompt: Option<String>,
+    #[serde(default = "default_verbosity")]
+    pub verbosity: String,
+}
+
+fn default_verbosity() -> String {
+    "normal".to_string()
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CopySettings {
+    #[serde(rename = "includeDayTitle", default = "default_include_day_title")]
+    pub include_day_title: bool,
+}
+
+fn default_include_day_title() -> bool {
+    true
 }

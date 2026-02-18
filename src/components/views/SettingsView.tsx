@@ -3,7 +3,7 @@ import { Check, RefreshCw, Settings as SettingsIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { discoverProviders } from "../../lib/aiProviders";
 import { useAppStore } from "../../stores/appStore";
-import type { AIProvider } from "../../types";
+import type { AIProvider, AIVerbosity } from "../../types";
 import { PageWrapper } from "../layout/PageWrapper";
 import { Button } from "../ui/Button";
 
@@ -22,6 +22,9 @@ export function SettingsView() {
 	const setWorkSchedule = useAppStore((state) => state.setWorkSchedule);
 	const aiConfig = useAppStore((state) => state.aiConfig);
 	const setAIConfig = useAppStore((state) => state.setAIConfig);
+	const setAIVerbosity = useAppStore((state) => state.setAIVerbosity);
+	const copySettings = useAppStore((state) => state.copySettings);
+	const setCopySettings = useAppStore((state) => state.setCopySettings);
 	const [gitAuthors, setGitAuthors] = useState(
 		(workSchedule?.gitAuthors || []).join(", "),
 	);
@@ -263,6 +266,37 @@ export function SettingsView() {
 				</div>
 
 				<div className="rounded-lg border border-border bg-bg-secondary p-6">
+					<h3 className="text-sm font-medium text-fg-primary mb-4">
+						Copy Settings
+					</h3>
+
+					<div className="space-y-4">
+						<label className="flex items-center gap-3 cursor-pointer">
+							<input
+								type="checkbox"
+								checked={copySettings.includeDayTitle}
+								onChange={(e) =>
+									setCopySettings({
+										...copySettings,
+										includeDayTitle: e.target.checked,
+									})
+								}
+								className="w-4 h-4 rounded border-border bg-bg-tertiary text-accent focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-primary"
+							/>
+							<div>
+								<span className="text-sm font-medium text-fg-primary">
+									Include day title when copying
+								</span>
+								<p className="text-xs text-fg-muted mt-0.5">
+									Prepend the date (e.g., "Tuesday, February 17, 2026") to
+									copied text
+								</p>
+							</div>
+						</label>
+					</div>
+				</div>
+
+				<div className="rounded-lg border border-border bg-bg-secondary p-6">
 					<div className="flex items-center justify-between mb-4">
 						<h3 className="text-sm font-medium text-fg-primary flex items-center gap-2">
 							<SettingsIcon className="w-4 h-4" />
@@ -426,6 +460,35 @@ export function SettingsView() {
 								Add Provider
 							</Button>
 						</div>
+					</div>
+
+					<div className="mt-6 pt-6 border-t border-border">
+						<h4 className="text-xs font-medium text-fg-primary mb-3">
+							Summary Verbosity
+						</h4>
+						<div className="flex gap-2">
+							{(["concise", "normal", "detailed"] as AIVerbosity[]).map(
+								(level) => (
+									<button
+										key={level}
+										onClick={() => setAIVerbosity(level)}
+										className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors capitalize ${
+											(aiConfig.verbosity ?? "normal") === level
+												? "bg-accent text-black"
+												: "bg-bg-tertiary text-fg-secondary hover:bg-bg-hover"
+										}`}
+									>
+										{level}
+									</button>
+								),
+							)}
+						</div>
+						<p className="text-xs text-fg-muted mt-2">
+							<span className="font-medium">Concise:</span> 1 sentence.{" "}
+							<span className="font-medium">Normal:</span> 2-3 sentences.{" "}
+							<span className="font-medium">Detailed:</span> 4-5 sentences with
+							more context.
+						</p>
 					</div>
 
 					<div className="mt-6 pt-6 border-t border-border">

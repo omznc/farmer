@@ -29,6 +29,7 @@ async fn save_settings(
     repo_history: Option<Vec<String>>,
     active_repos: Option<Vec<String>>,
     filter_by_git_authors: Option<bool>,
+    copy_settings: Option<CopySettings>,
 ) -> Result<(), String> {
     let settings_path = get_settings_path()?;
 
@@ -39,6 +40,7 @@ async fn save_settings(
         "repoHistory": repo_history,
         "activeRepos": active_repos,
         "filterByGitAuthors": filter_by_git_authors,
+        "copySettings": copy_settings,
     });
 
     fs::write(

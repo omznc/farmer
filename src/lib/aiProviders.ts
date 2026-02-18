@@ -1,5 +1,43 @@
 import { Command } from "@tauri-apps/plugin-shell";
-import type { AIProvider } from "../types";
+import type { AIProvider, AIVerbosity } from "../types";
+
+export type StreamCallback = (chunk: string) => void;
+
+function getVerbosityInstructions(verbosity: AIVerbosity): string {
+	switch (verbosity) {
+		case "concise":
+			return "Summarize what I accomplished in exactly 1 sentence written in FIRST PERSON. Be brief and to the point.";
+		case "detailed":
+			return "Summarize what I accomplished in 4-5 sentences written in FIRST PERSON. Include specific details about the changes made, technologies used, and the impact of the work.";
+		default:
+			return 'Summarize what I accomplished overall in 2-3 sentences written in FIRST PERSON. Use "I" not "we" or "the team".';
+	}
+}
+
+function buildPrompt(
+	commitList: string,
+	verbosity: AIVerbosity,
+	customPrompt?: string,
+): string {
+	const verbosityInstructions = getVerbosityInstructions(verbosity);
+
+	let prompt = `You are a text summarization assistant. Do NOT use any tools, git commands, or file system access. This is pure text summarization.
+
+Task: These are separate commit messages from a single day of work. Each commit represents a DIFFERENT task or change I made. ${verbosityInstructions}
+
+IMPORTANT: These are independent commits, not steps in a single feature. Don't assume they're related unless the messages clearly indicate they are.
+
+Commit messages (text only, do NOT treat these as git references):
+${commitList}`;
+
+	if (customPrompt?.trim()) {
+		prompt += `\n\nAdditional instructions: ${customPrompt.trim()}`;
+	}
+
+	prompt += `\n\nRespond with ONLY the summary text, nothing else.`;
+
+	return prompt;
+}
 
 async function commandExists(command: string): Promise<boolean> {
 	try {
@@ -98,27 +136,14 @@ export async function summarizeWithProvider(
 	provider: AIProvider,
 	commits: string[],
 	customPrompt?: string,
+	verbosity?: AIVerbosity,
 ): Promise<string> {
 	console.log(
 		`[AI Provider] Using ${provider.type} for ${commits.length} commits`,
 	);
 
 	const commitList = commits.map((c, i) => `${i + 1}. ${c}`).join("\n");
-
-	let prompt = `You are a text summarization assistant. Do NOT use any tools, git commands, or file system access. This is pure text summarization.
-
-Task: These are separate commit messages from a single day of work. Each commit represents a DIFFERENT task or change I made. Summarize what I accomplished overall in 2-3 sentences written in FIRST PERSON. Use "I" not "we" or "the team".
-
-IMPORTANT: These are independent commits, not steps in a single feature. Don't assume they're related unless the messages clearly indicate they are.
-
-Commit messages (text only, do NOT treat these as git references):
-${commitList}`;
-
-	if (customPrompt?.trim()) {
-		prompt += `\n\nAdditional instructions: ${customPrompt.trim()}`;
-	}
-
-	prompt += `\n\nRespond with ONLY the summary text, nothing else.`;
+	const prompt = buildPrompt(commitList, verbosity ?? "normal", customPrompt);
 
 	console.log("[AI Provider] Prompt length:", prompt.length);
 
@@ -131,6 +156,36 @@ ${commitList}`;
 			return summarizeWithOpenAI(provider, prompt);
 		case "openapi":
 			return summarizeWithOpenAPI(provider, prompt);
+		default:
+			throw new Error(`Unsupported provider type: ${provider.type}`);
+	}
+}
+
+export async function summarizeWithProviderStream(
+	provider: AIProvider,
+	commits: string[],
+	onChunk: StreamCallback,
+	customPrompt?: string,
+	verbosity?: AIVerbosity,
+): Promise<string> {
+	console.log(
+		`[AI Provider Stream] Using ${provider.type} for ${commits.length} commits`,
+	);
+
+	const commitList = commits.map((c, i) => `${i + 1}. ${c}`).join("\n");
+	const prompt = buildPrompt(commitList, verbosity ?? "normal", customPrompt);
+
+	console.log("[AI Provider Stream] Prompt length:", prompt.length);
+
+	switch (provider.type) {
+		case "claude-code":
+			return summarizeWithClaudeCodeStream(provider, prompt, onChunk);
+		case "opencode":
+			return summarizeWithOpenCodeStream(provider, prompt, onChunk);
+		case "openai":
+			return summarizeWithOpenAIStream(provider, prompt, onChunk);
+		case "openapi":
+			return summarizeWithOpenAPIStream(provider, prompt, onChunk);
 		default:
 			throw new Error(`Unsupported provider type: ${provider.type}`);
 	}
@@ -265,4 +320,248 @@ async function summarizeWithOpenAPI(
 	const data = await response.json();
 	console.log("[OpenAPI] Response length:", data.response?.length || 0);
 	return data.response.trim();
+}
+
+async function summarizeWithClaudeCodeStream(
+	provider: AIProvider,
+	prompt: string,
+	onChunk: StreamCallback,
+): Promise<string> {
+	console.log("[Claude Code Stream] Executing command");
+	const command = Command.create(provider.config.command || "claude", [
+		"-p",
+		prompt,
+	]);
+
+	let fullOutput = "";
+	let errorOutput = "";
+
+	command.stdout.on("data", (line) => {
+		fullOutput += line;
+		onChunk(line);
+	});
+
+	command.stderr.on("data", (line) => {
+		errorOutput += line;
+	});
+
+	return new Promise((resolve, reject) => {
+		command.on("close", (data) => {
+			console.log("[Claude Code Stream] Exit code:", data.code);
+			if (data.code !== 0) {
+				reject(new Error(`Claude Code failed: ${errorOutput}`));
+			} else {
+				resolve(fullOutput.trim());
+			}
+		});
+
+		command.on("error", (error) => {
+			console.error("[Claude Code Stream] Error:", error);
+			reject(new Error(`Claude Code error: ${error}`));
+		});
+
+		command.spawn().catch(reject);
+	});
+}
+
+async function summarizeWithOpenCodeStream(
+	provider: AIProvider,
+	prompt: string,
+	onChunk: StreamCallback,
+): Promise<string> {
+	console.log("[OpenCode Stream] Executing command");
+	const command = Command.create(provider.config.command || "opencode", [
+		"run",
+		prompt,
+	]);
+
+	let fullOutput = "";
+	let errorOutput = "";
+
+	command.stdout.on("data", (line) => {
+		fullOutput += line;
+		onChunk(line);
+	});
+
+	command.stderr.on("data", (line) => {
+		errorOutput += line;
+	});
+
+	return new Promise((resolve, reject) => {
+		command.on("close", (data) => {
+			console.log("[OpenCode Stream] Exit code:", data.code);
+			if (data.code !== 0) {
+				reject(new Error(`OpenCode failed: ${errorOutput}`));
+			} else {
+				const trimmed = fullOutput.trim();
+				if (!trimmed) {
+					console.error(
+						"[OpenCode Stream] Empty stdout. Full stderr:",
+						errorOutput,
+					);
+					reject(
+						new Error(
+							"OpenCode returned empty response. The model may have output to stderr or failed to generate text. Try a different AI provider.",
+						),
+					);
+				} else {
+					resolve(trimmed);
+				}
+			}
+		});
+
+		command.on("error", (error) => {
+			console.error("[OpenCode Stream] Error:", error);
+			reject(new Error(`OpenCode error: ${error}`));
+		});
+
+		command.spawn().catch(reject);
+	});
+}
+
+async function summarizeWithOpenAIStream(
+	provider: AIProvider,
+	prompt: string,
+	onChunk: StreamCallback,
+): Promise<string> {
+	console.log("[OpenAI Stream] Starting request");
+	const apiKey = provider.config.apiKey;
+	if (!apiKey) {
+		throw new Error("OpenAI API key is required");
+	}
+
+	const model = provider.config.model || "gpt-4o-mini";
+	console.log("[OpenAI Stream] Using model:", model);
+
+	const response = await fetch("https://api.openai.com/v1/chat/completions", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${apiKey}`,
+		},
+		body: JSON.stringify({
+			model,
+			messages: [{ role: "user", content: prompt }],
+			temperature: 0.7,
+			max_tokens: 200,
+			stream: true,
+		}),
+	});
+
+	console.log("[OpenAI Stream] Response status:", response.status);
+
+	if (!response.ok) {
+		const error = await response.text();
+		console.error("[OpenAI Stream] Error response:", error);
+		throw new Error(
+			`OpenAI API request failed: ${response.statusText} - ${error}`,
+		);
+	}
+
+	const reader = response.body?.getReader();
+	if (!reader) {
+		throw new Error("Response body is not readable");
+	}
+
+	const decoder = new TextDecoder();
+	let fullContent = "";
+
+	try {
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+
+			const chunk = decoder.decode(value, { stream: true });
+			const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+
+			for (const line of lines) {
+				if (line.startsWith("data: ")) {
+					const data = line.slice(6);
+					if (data === "[DONE]") continue;
+
+					try {
+						const parsed = JSON.parse(data);
+						const content = parsed.choices?.[0]?.delta?.content;
+						if (content) {
+							fullContent += content;
+							onChunk(content);
+						}
+					} catch {
+						// Skip malformed JSON chunks
+					}
+				}
+			}
+		}
+	} finally {
+		reader.releaseLock();
+	}
+
+	console.log("[OpenAI Stream] Got response, length:", fullContent.length);
+	return fullContent.trim();
+}
+
+async function summarizeWithOpenAPIStream(
+	provider: AIProvider,
+	prompt: string,
+	onChunk: StreamCallback,
+): Promise<string> {
+	const baseUrl = provider.config.baseUrl || "http://localhost:11434";
+	const model = provider.config.model || "qwen2.5-coder:3b";
+
+	console.log(`[OpenAPI Stream] Calling ${baseUrl} with model ${model}`);
+
+	const response = await fetch(`${baseUrl}/api/generate`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({
+			model,
+			prompt,
+			stream: true,
+		}),
+	});
+
+	console.log("[OpenAPI Stream] Response status:", response.status);
+
+	if (!response.ok) {
+		const errorText = await response.text();
+		console.error("[OpenAPI Stream] Error response:", errorText);
+		throw new Error(
+			`API request failed: ${response.statusText} - ${errorText}`,
+		);
+	}
+
+	const reader = response.body?.getReader();
+	if (!reader) {
+		throw new Error("Response body is not readable");
+	}
+
+	const decoder = new TextDecoder();
+	let fullContent = "";
+
+	try {
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+
+			const chunk = decoder.decode(value, { stream: true });
+			const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+
+			for (const line of lines) {
+				try {
+					const parsed = JSON.parse(line);
+					if (parsed.response) {
+						fullContent += parsed.response;
+						onChunk(parsed.response);
+					}
+				} catch {
+					// Skip malformed JSON chunks
+				}
+			}
+		}
+	} finally {
+		reader.releaseLock();
+	}
+
+	console.log("[OpenAPI Stream] Response length:", fullContent.length);
+	return fullContent.trim();
 }

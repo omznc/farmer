@@ -2,7 +2,7 @@ import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { format } from "date-fns";
 import { Clock, Copy, GitCommit, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { isAIConfigured, summarizeCommits } from "../../lib/ai";
+import { isAIConfigured, summarizeCommitsStream } from "../../lib/ai";
 import { useAppStore } from "../../stores/appStore";
 import type { Commit, WorkDay } from "../../types";
 import { Button } from "../ui/Button";
@@ -92,6 +92,7 @@ function WorkDayCard({
 	const [isAiLoading, setIsAiLoading] = useState(false);
 	const aiSummary = useAppStore((state) => state.aiSummaries[workDay.date]);
 	const setAISummary = useAppStore((state) => state.setAISummary);
+	const copySettings = useAppStore((state) => state.copySettings);
 	const aiConfigured = isAIConfigured();
 	const date = new Date(workDay.date);
 	const formattedDate = format(date, "EEEE, MMMM d, yyyy");
@@ -110,7 +111,10 @@ function WorkDayCard({
 				: `${repoPrefix}${message}`;
 		});
 
-		const text = `${formattedDate}\n\n${lines.join("\n")}`;
+		const includeTitle = copySettings?.includeDayTitle ?? true;
+		const text = includeTitle
+			? `${formattedDate}\n\n${lines.join("\n")}`
+			: lines.join("\n");
 
 		try {
 			await writeText(text);
@@ -123,6 +127,7 @@ function WorkDayCard({
 	const generateAISummary = async () => {
 		console.log("[CommitTimeline] AI Summary clicked");
 		setIsAiLoading(true);
+		setAISummary(workDay.date, "");
 		try {
 			const commitMessages = workDay.commits.map((c) => {
 				const repoPrefix = c.repoName ? `[${c.repoName}] ` : "";
@@ -130,12 +135,16 @@ function WorkDayCard({
 			});
 			console.log("[CommitTimeline] Commit messages:", commitMessages);
 
-			const summary = await summarizeCommits(commitMessages);
-			console.log("[CommitTimeline] Got summary:", summary);
+			const summary = await summarizeCommitsStream(commitMessages, (chunk) => {
+				const current = useAppStore.getState().aiSummaries[workDay.date] || "";
+				setAISummary(workDay.date, current + chunk);
+			});
+			console.log("[CommitTimeline] Got final summary:", summary);
 
 			setAISummary(workDay.date, summary);
 		} catch (err) {
 			console.error("[CommitTimeline] AI summarization failed:", err);
+			setAISummary(workDay.date, "");
 			alert(`AI summarization failed: ${err}`);
 		} finally {
 			setIsAiLoading(false);
@@ -150,7 +159,11 @@ function WorkDayCard({
 			.filter(Boolean)
 			.join("\n");
 
-		const text = `${formattedDate}\n\n${aiSummary}${urls ? `\n\nCommits:\n${urls}` : ""}`;
+		const includeTitle = copySettings?.includeDayTitle ?? true;
+		const summaryText = urls ? `${aiSummary}\n\nCommits:\n${urls}` : aiSummary;
+		const text = includeTitle
+			? `${formattedDate}\n\n${summaryText}`
+			: summaryText;
 
 		try {
 			await writeText(text);
@@ -232,48 +245,17 @@ function WorkDayCard({
 
 				{(isAiLoading || aiSummary) && (
 					<div className="px-5 py-4 border-b border-border">
-						{isAiLoading ? (
-							<div className="space-y-3">
-								<div className="flex items-center gap-2 mb-4">
-									<Sparkles className="w-4 h-4 text-purple-500" />
+						<div className="space-y-3">
+							<div className="flex items-start justify-between gap-3">
+								<div className="flex items-center gap-2">
+									<Sparkles
+										className={`w-4 h-4 text-purple-500 ${isAiLoading ? "animate-pulse" : ""}`}
+									/>
 									<span className="text-xs font-medium text-purple-500">
-										Generating summary...
+										{isAiLoading ? "Generating summary..." : "AI Summary"}
 									</span>
 								</div>
-								<div className="relative h-4 rounded overflow-hidden">
-									<div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-500/20 to-purple-600/20 bg-[length:200%_100%] animate-gradient animate-pulse-glow" />
-									<div className="absolute inset-0 overflow-hidden">
-										<div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-									</div>
-								</div>
-								<div
-									className="relative h-4 rounded overflow-hidden"
-									style={{ width: "80%" }}
-								>
-									<div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-500/20 to-purple-600/20 bg-[length:200%_100%] animate-gradient animate-pulse-glow" />
-									<div className="absolute inset-0 overflow-hidden">
-										<div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-									</div>
-								</div>
-								<div
-									className="relative h-4 rounded overflow-hidden"
-									style={{ width: "60%" }}
-								>
-									<div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-500/20 to-purple-600/20 bg-[length:200%_100%] animate-gradient animate-pulse-glow" />
-									<div className="absolute inset-0 overflow-hidden">
-										<div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-									</div>
-								</div>
-							</div>
-						) : aiSummary ? (
-							<div className="space-y-3">
-								<div className="flex items-start justify-between gap-3">
-									<div className="flex items-center gap-2">
-										<Sparkles className="w-4 h-4 text-purple-500" />
-										<span className="text-xs font-medium text-purple-500">
-											AI Summary
-										</span>
-									</div>
+								{!isAiLoading && aiSummary && (
 									<div className="flex items-center gap-2">
 										<Button
 											variant="secondary"
@@ -291,37 +273,69 @@ function WorkDayCard({
 											Regenerate
 										</Button>
 									</div>
-								</div>
-								<p className="text-sm text-fg-primary leading-relaxed">
-									{aiSummary}
-								</p>
-								{workDay.commits.some((c) =>
-									getCommitUrl(c.remoteUrl, c.hash),
-								) && (
-									<div className="mt-3 pt-3 border-t border-border/50">
-										<p className="text-xs font-medium text-fg-secondary mb-2">
-											Commits:
-										</p>
-										<div className="space-y-1">
-											{workDay.commits.map((c) => {
-												const url = getCommitUrl(c.remoteUrl, c.hash);
-												return url ? (
-													<a
-														key={c.hash}
-														href={url}
-														target="_blank"
-														rel="noopener noreferrer"
-														className="block text-xs text-purple-500 hover:text-purple-400 transition-colors font-mono truncate"
-													>
-														{url}
-													</a>
-												) : null;
-											})}
-										</div>
-									</div>
 								)}
 							</div>
-						) : null}
+							{aiSummary ? (
+								<p className="text-sm text-fg-primary leading-relaxed">
+									{aiSummary}
+									{isAiLoading && (
+										<span className="inline-block w-1.5 h-4 ml-0.5 bg-purple-500 animate-pulse" />
+									)}
+								</p>
+							) : (
+								<div className="space-y-3">
+									<div className="relative h-4 rounded overflow-hidden">
+										<div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-500/20 to-purple-600/20 bg-[length:200%_100%] animate-gradient animate-pulse-glow" />
+										<div className="absolute inset-0 overflow-hidden">
+											<div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+										</div>
+									</div>
+									<div
+										className="relative h-4 rounded overflow-hidden"
+										style={{ width: "80%" }}
+									>
+										<div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-500/20 to-purple-600/20 bg-[length:200%_100%] animate-gradient animate-pulse-glow" />
+										<div className="absolute inset-0 overflow-hidden">
+											<div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+										</div>
+									</div>
+									<div
+										className="relative h-4 rounded overflow-hidden"
+										style={{ width: "60%" }}
+									>
+										<div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-500/20 to-purple-600/20 bg-[length:200%_100%] animate-gradient animate-pulse-glow" />
+										<div className="absolute inset-0 overflow-hidden">
+											<div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+										</div>
+									</div>
+								</div>
+							)}
+							{workDay.commits.some((c) =>
+								getCommitUrl(c.remoteUrl, c.hash),
+							) && (
+								<div className="mt-3 pt-3 border-t border-border/50">
+									<p className="text-xs font-medium text-fg-secondary mb-2">
+										Commits:
+									</p>
+									<div className="space-y-1">
+										{workDay.commits.map((c) => {
+											const url = getCommitUrl(c.remoteUrl, c.hash);
+											return url ? (
+												<a
+													key={c.hash}
+													href={url}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="block text-xs text-purple-500 hover:text-purple-400 transition-colors font-mono truncate"
+												>
+													{url}
+												</a>
+											) : null;
+										})}
+									</div>
+								</div>
+							)}
+						</div>
 					</div>
 				)}
 

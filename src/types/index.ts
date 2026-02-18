@@ -40,10 +40,17 @@ export interface AIProvider {
 	};
 }
 
+export type AIVerbosity = "concise" | "normal" | "detailed";
+
 export interface AIConfig {
 	providers: AIProvider[];
 	selectedProvider?: string;
 	customPrompt?: string;
+	verbosity?: AIVerbosity;
+}
+
+export interface CopySettings {
+	includeDayTitle: boolean;
 }
 
 export type View = "repository" | "settings" | "about";
@@ -56,6 +63,7 @@ export interface AppState {
 	filterByGitAuthors: boolean;
 	workSchedule: WorkSchedule;
 	aiConfig: AIConfig;
+	copySettings: CopySettings;
 	workDays: WorkDay[];
 	isLoading: boolean;
 	error: string | null;

@@ -1,6 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
-import type { AIConfig, AppState, WorkDay, WorkSchedule } from "../types";
+import type {
+	AIConfig,
+	AIVerbosity,
+	AppState,
+	CopySettings,
+	WorkDay,
+	WorkSchedule,
+} from "../types";
 
 interface AppStore extends AppState {
 	aiSummaries: Record<string, string>;
@@ -13,6 +20,8 @@ interface AppStore extends AppState {
 	setFilterByGitAuthors: (filter: boolean) => void;
 	setWorkSchedule: (schedule: WorkSchedule) => void;
 	setAIConfig: (config: AIConfig) => void;
+	setAIVerbosity: (verbosity: AIVerbosity) => void;
+	setCopySettings: (settings: CopySettings) => void;
 	setWorkDays: (days: WorkDay[]) => void;
 	setAISummary: (date: string, summary: string) => void;
 	getAISummary: (date: string) => string | undefined;
@@ -29,6 +38,10 @@ const DEFAULT_WORK_SCHEDULE: WorkSchedule = {
 	weekendAttribution: "friday",
 };
 
+const DEFAULT_COPY_SETTINGS: CopySettings = {
+	includeDayTitle: true,
+};
+
 export const useAppStore = create<AppStore>((set, get) => ({
 	currentView: "repository",
 	repoPath: null,
@@ -39,7 +52,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
 	aiConfig: {
 		providers: [],
 		selectedProvider: undefined,
+		verbosity: "normal",
 	},
+	copySettings: DEFAULT_COPY_SETTINGS,
 	workDays: [],
 	aiSummaries: {},
 	isLoading: false,
@@ -99,6 +114,16 @@ export const useAppStore = create<AppStore>((set, get) => ({
 		set({ aiConfig: config });
 		get().saveSettings();
 	},
+	setAIVerbosity: (verbosity) => {
+		set((state) => ({
+			aiConfig: { ...state.aiConfig, verbosity },
+		}));
+		get().saveSettings();
+	},
+	setCopySettings: (settings) => {
+		set({ copySettings: settings });
+		get().saveSettings();
+	},
 	setWorkDays: (days) => set({ workDays: days }),
 	setAISummary: (date, summary) =>
 		set((state) => ({
@@ -118,6 +143,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
 				repoHistory?: string[] | null;
 				activeRepos?: string[] | null;
 				filterByGitAuthors?: boolean | null;
+				copySettings?: CopySettings | null;
 			}>("load_settings");
 
 			const loadedSchedule = settings.workSchedule;
@@ -128,18 +154,24 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
 			set({
 				workSchedule: validSchedule,
-				aiConfig: settings.aiConfig ?? {
-					providers: [],
-					selectedProvider: undefined,
+				aiConfig: {
+					providers: settings.aiConfig?.providers ?? [],
+					selectedProvider: settings.aiConfig?.selectedProvider ?? undefined,
+					customPrompt: settings.aiConfig?.customPrompt ?? undefined,
+					verbosity: settings.aiConfig?.verbosity ?? "normal",
 				},
 				repoPath: settings.repoPath ?? null,
 				repoHistory: settings.repoHistory ?? [],
 				activeRepos: settings.activeRepos ?? [],
 				filterByGitAuthors: settings.filterByGitAuthors ?? true,
+				copySettings: settings.copySettings ?? DEFAULT_COPY_SETTINGS,
 			});
 		} catch (error) {
 			console.error("Failed to load settings:", error);
-			set({ workSchedule: DEFAULT_WORK_SCHEDULE });
+			set({
+				workSchedule: DEFAULT_WORK_SCHEDULE,
+				copySettings: DEFAULT_COPY_SETTINGS,
+			});
 		}
 	},
 
@@ -153,6 +185,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
 				repoHistory: state.repoHistory,
 				activeRepos: state.activeRepos,
 				filterByGitAuthors: state.filterByGitAuthors,
+				copySettings: state.copySettings,
 			});
 		} catch (error) {
 			console.error("Failed to save settings:", error);
