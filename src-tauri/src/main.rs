@@ -4,5 +4,5 @@
 fn main() {
     std::env::set_var("GDK_BACKEND", "x11");
     std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-    profico_farmer_lib::run()
+    farmer_lib::run()
 }

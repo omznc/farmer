@@ -9,7 +9,10 @@ import { summarizeCommits, isAIConfigured } from "../../lib/ai";
 
 interface CommitTimelineProps {
   workDays: WorkDay[];
+  repoColorMap?: Map<string, { bg: string; text: string; border: string }>;
 }
+
+const DEFAULT_COLOR = { bg: "bg-gray-500/20", text: "text-gray-400", border: "border-gray-500/50" };
 
 const getCommitUrl = (remoteUrl: string | undefined, hash: string) => {
   if (!remoteUrl) return null;
@@ -32,7 +35,7 @@ const getCommitUrl = (remoteUrl: string | undefined, hash: string) => {
   return null;
 };
 
-export function CommitTimeline({ workDays }: CommitTimelineProps) {
+export function CommitTimeline({ workDays, repoColorMap }: CommitTimelineProps) {
   if (workDays.length === 0) {
     return (
       <div className="text-center py-12 text-fg-secondary">
@@ -43,14 +46,18 @@ export function CommitTimeline({ workDays }: CommitTimelineProps) {
 
   return (
     <div className="space-y-4">
-      {workDays.map((day) => (
-        <WorkDayCard key={String(day.date)} workDay={day} />
+      {workDays.map((day, index) => (
+        <WorkDayCard
+          key={`${day.date}-${index}`}
+          workDay={day}
+          repoColorMap={repoColorMap}
+        />
       ))}
     </div>
   );
 }
 
-function WorkDayCard({ workDay }: { workDay: WorkDay }) {
+function WorkDayCard({ workDay, repoColorMap }: { workDay: WorkDay; repoColorMap?: Map<string, { bg: string; text: string; border: string }> }) {
   const [toast, setToast] = useState<{ x: number; y: number } | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
@@ -58,15 +65,18 @@ function WorkDayCard({ workDay }: { workDay: WorkDay }) {
   const date = new Date(workDay.date);
   const formattedDate = format(date, "EEEE, MMMM d, yyyy");
 
+  const uniqueRepos = [...new Set(workDay.commits.map(c => c.repoName).filter(Boolean))];
+
   const copyWorkDay = async (e: React.MouseEvent) => {
     const lines = workDay.commits.map(commit => {
       const message = commit.message.split("\n")[0];
       const commitUrl = getCommitUrl(commit.remoteUrl, commit.hash);
-      return commitUrl ? `${message} (${commitUrl})` : message;
+      const repoPrefix = commit.repoName ? `[${commit.repoName}] ` : "";
+      return commitUrl ? `${repoPrefix}${message} (${commitUrl})` : `${repoPrefix}${message}`;
     });
-    
+
     const text = `${formattedDate}\n\n${lines.join("\n")}`;
-    
+
     try {
       await writeText(text);
       setToast({ x: e.clientX, y: e.clientY });
@@ -80,12 +90,15 @@ function WorkDayCard({ workDay }: { workDay: WorkDay }) {
     setIsAiLoading(true);
     setAiSummary(null);
     try {
-      const commitMessages = workDay.commits.map(c => c.message.split("\n")[0]);
+      const commitMessages = workDay.commits.map(c => {
+        const repoPrefix = c.repoName ? `[${c.repoName}] ` : "";
+        return `${repoPrefix}${c.message.split("\n")[0]}`;
+      });
       console.log("[CommitTimeline] Commit messages:", commitMessages);
-      
+
       const summary = await summarizeCommits(commitMessages);
       console.log("[CommitTimeline] Got summary:", summary);
-      
+
       setAiSummary(summary);
     } catch (err) {
       console.error("[CommitTimeline] AI summarization failed:", err);
@@ -97,14 +110,14 @@ function WorkDayCard({ workDay }: { workDay: WorkDay }) {
 
   const copyAISummary = async (e: React.MouseEvent) => {
     if (!aiSummary) return;
-    
+
     const urls = workDay.commits
       .map(c => getCommitUrl(c.remoteUrl, c.hash))
       .filter(Boolean)
       .join("\n");
-    
+
     const text = `${formattedDate}\n\n${aiSummary}${urls ? "\n\nCommits:\n" + urls : ""}`;
-    
+
     try {
       await writeText(text);
       setToast({ x: e.clientX, y: e.clientY });
@@ -119,13 +132,27 @@ function WorkDayCard({ workDay }: { workDay: WorkDay }) {
         <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-semibold text-fg-primary">
-                {formattedDate}
-              </h3>
-              <div className="flex items-center gap-4 text-sm text-fg-secondary mt-2">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <h3 className="text-base font-semibold text-fg-primary">
+                  {formattedDate}
+                </h3>
+                {uniqueRepos.map((repoName) => {
+                  const commit = workDay.commits.find(c => c.repoName === repoName);
+                  const color = repoColorMap?.get(commit?.repoPath || "") || DEFAULT_COLOR;
+                  return (
+                    <span
+                      key={repoName}
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${color.bg} ${color.text}`}
+                    >
+                      {repoName}
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-4 text-sm text-fg-secondary">
                 <span className="flex items-center gap-1.5">
                   <GitCommit className="w-4 h-4" />
-                  {workDay.totalCommits} commits
+                  {workDay.totalCommits} commit{workDay.totalCommits !== 1 && "s"}
                 </span>
                 {workDay.firstCommitTime && (
                   <span className="flex items-center gap-1.5">
@@ -136,8 +163,8 @@ function WorkDayCard({ workDay }: { workDay: WorkDay }) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 size="md"
                 onClick={copyWorkDay}
               >
@@ -221,7 +248,7 @@ function WorkDayCard({ workDay }: { workDay: WorkDay }) {
                       {workDay.commits.map(c => {
                         const url = getCommitUrl(c.remoteUrl, c.hash);
                         return url ? (
-                          <a 
+                          <a
                             key={c.hash}
                             href={url}
                             target="_blank"
@@ -243,7 +270,11 @@ function WorkDayCard({ workDay }: { workDay: WorkDay }) {
         <div className="p-2">
           <div className="space-y-1">
             {workDay.commits.map((commit) => (
-              <CommitItem key={commit.hash} commit={commit} />
+              <CommitItem
+                key={commit.hash}
+                commit={commit}
+                repoColor={repoColorMap?.get(commit.repoPath || "")}
+              />
             ))}
           </div>
         </div>
@@ -261,7 +292,7 @@ function WorkDayCard({ workDay }: { workDay: WorkDay }) {
   );
 }
 
-function CommitItem({ commit }: { commit: Commit }) {
+function CommitItem({ commit, repoColor }: { commit: Commit; repoColor?: { bg: string; text: string; border: string } }) {
   const [toast, setToast] = useState<{ x: number; y: number } | null>(null);
   const commitDate = new Date(commit.timestamp);
   const time = String(commitDate.toLocaleTimeString("en-US", {
@@ -273,11 +304,11 @@ function CommitItem({ commit }: { commit: Commit }) {
   const handleCopy = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const message = commit.message.split("\n")[0];
     const commitUrl = getCommitUrl(commit.remoteUrl, commit.hash);
-    
-    const formattedText = commitUrl 
+
+    const formattedText = commitUrl
       ? `${message} (${commitUrl})`
       : message;
 
@@ -289,9 +320,11 @@ function CommitItem({ commit }: { commit: Commit }) {
     }
   };
 
+  const color = repoColor || DEFAULT_COLOR;
+
   return (
     <>
-      <div 
+      <div
         className="flex items-start gap-3 p-3 rounded-md bg-bg-tertiary hover:bg-bg-hover transition-colors cursor-pointer group"
         onClick={handleCopy}
       >
@@ -299,8 +332,15 @@ function CommitItem({ commit }: { commit: Commit }) {
           {commit.hash.substring(0, 7)}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm text-fg-primary truncate mb-1">
-            {commit.message.split("\n")[0]}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm text-fg-primary truncate">
+              {commit.message.split("\n")[0]}
+            </span>
+            {commit.repoName && (
+              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0 ${color.bg} ${color.text}`}>
+                {commit.repoName}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 text-xs text-fg-secondary">
             <span className="font-medium">{commit.author}</span>

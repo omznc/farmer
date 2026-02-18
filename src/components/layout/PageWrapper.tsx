@@ -12,7 +12,7 @@ export function PageWrapper({ view, children }: ViewComponentProps) {
           </h2>
           <p className="text-sm text-fg-secondary">
             {view === "repository" && "Analyze Git commits to automatically generate time entries"}
-            {view === "settings" && "Configure your Profico Farmer preferences"}
+            {view === "settings" && "Configure your Farmer preferences"}
           </p>
         </div>
       </div>

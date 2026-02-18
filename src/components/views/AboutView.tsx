@@ -13,10 +13,10 @@ export function AboutView() {
       <div className="rounded-lg border border-border bg-bg-secondary p-6">
         <h3 className="text-sm font-medium text-fg-primary mb-4">What is this?</h3>
         <p className="text-sm text-fg-secondary leading-relaxed mb-4">
-          Profico Farmer analyzes your Git commits and uses AI to generate professional summaries of your work. 
+          Farmer analyzes your Git commits and uses AI to generate professional summaries of your work.
           It automatically tracks your development activity, making it easier to log time and report on what you've accomplished.
         </p>
-        
+
         <div className="pt-4 border-t border-border">
           <h4 className="text-xs font-medium text-fg-primary mb-3">Key Features</h4>
           <ul className="space-y-2 text-sm text-fg-secondary">

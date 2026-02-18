@@ -11,7 +11,7 @@ export function Header() {
       case "settings":
         return "Settings";
       default:
-        return "Profico Farmer";
+        return "Farmer";
     }
   };
 

@@ -6,6 +6,8 @@ interface AppStore extends AppState {
   setCurrentView: (view: AppState["currentView"]) => void;
   setRepoPath: (path: string | null) => void;
   addRepoToHistory: (path: string) => void;
+  toggleActiveRepo: (path: string) => void;
+  setActiveRepos: (paths: string[]) => void;
   setFilterByGitAuthors: (filter: boolean) => void;
   setWorkSchedule: (schedule: WorkSchedule) => void;
   setAIConfig: (config: AIConfig) => void;
@@ -27,6 +29,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   currentView: "repository",
   repoPath: null,
   repoHistory: [],
+  activeRepos: [],
   filterByGitAuthors: true,
   workSchedule: DEFAULT_WORK_SCHEDULE,
   aiConfig: {
@@ -54,6 +57,19 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({ repoHistory: newHistory });
     get().saveSettings();
   },
+  toggleActiveRepo: (path) => {
+    const activeRepos = get().activeRepos;
+    const isActive = activeRepos.includes(path);
+    const newActiveRepos = isActive
+      ? activeRepos.filter(p => p !== path)
+      : [...activeRepos, path];
+    set({ activeRepos: newActiveRepos });
+    get().saveSettings();
+  },
+  setActiveRepos: (paths) => {
+    set({ activeRepos: paths });
+    get().saveSettings();
+  },
   setFilterByGitAuthors: (filter) => {
     set({ filterByGitAuthors: filter });
     get().saveSettings();
@@ -78,6 +94,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         aiConfig?: AIConfig | null;
         repoPath?: string | null;
         repoHistory?: string[] | null;
+        activeRepos?: string[] | null;
         filterByGitAuthors?: boolean | null;
       }>("load_settings");
 
@@ -93,6 +110,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         aiConfig: settings.aiConfig ?? { providers: [], selectedProvider: undefined },
         repoPath: settings.repoPath ?? null,
         repoHistory: settings.repoHistory ?? [],
+        activeRepos: settings.activeRepos ?? [],
         filterByGitAuthors: settings.filterByGitAuthors ?? true,
       });
     } catch (error) {
@@ -109,6 +127,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         aiConfig: state.aiConfig,
         repoPath: state.repoPath,
         repoHistory: state.repoHistory,
+        activeRepos: state.activeRepos,
         filterByGitAuthors: state.filterByGitAuthors,
       });
     } catch (error) {

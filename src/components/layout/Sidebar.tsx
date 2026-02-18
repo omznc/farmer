@@ -25,7 +25,7 @@ export function Sidebar() {
     <aside className="flex select-none w-56 flex-col border-r border-border bg-bg-secondary rounded-bl-lg overflow-hidden">
       <div className="flex h-14 items-center px-5 border-b border-border">
         <span className="text-lg font-semibold text-fg-primary">
-          Profico Farmer
+          Farmer
         </span>
       </div>
 

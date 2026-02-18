@@ -5,6 +5,7 @@ export interface Commit {
   message: string;
   filesChanged: string[];
   repoPath: string;
+  repoName?: string;
   remoteUrl?: string;
 }
 
@@ -14,81 +15,8 @@ export interface WorkDay {
   totalCommits: number;
   firstCommitTime?: string;
   lastCommitTime?: string;
-}
-
-export interface HarvestConfig {
-  accessToken: string;
-  accountId: string;
-  refreshToken?: string;
-  defaultProjectId: number;
-  defaultTaskId: number;
-  meetingProjectId?: number;
-  meetingTaskId?: number;
-}
-
-export interface HarvestAccount {
-  id: number;
-  name: string;
-  baseCurrency: string;
-}
-
-export interface HarvestUser {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
-
-export interface HarvestTimeEntryResponse {
-  id: number;
-  spentDate: string;
-  hours: number;
-  notes: string | null;
-  project?: {
-    id: number;
-    name: string;
-    code?: string;
-  };
-  task?: {
-    id: number;
-    name: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface HarvestProject {
-  id: number;
-  name: string;
-  code?: string;
-  clientId: number;
-  clientName: string;
-}
-
-export interface HarvestTask {
-  id: number;
-  name: string;
-  billable: boolean;
-  hourlyRate?: number;
-}
-
-export interface TimeEntry {
-  id?: number;
-  projectId: number;
-  taskId: number;
-  spentDate: Date;
-  hours: number;
-  notes: string;
-  externalReference?: string;
-}
-
-export interface Meeting {
-  id: string;
-  title: string;
-  startTime: Date;
-  endTime: Date;
-  durationMinutes: number;
-  calendarSource: "google" | "outlook" | "ical";
+  repoPath?: string;
+  repoName?: string;
 }
 
 export interface WorkSchedule {
@@ -124,6 +52,7 @@ export interface AppState {
   currentView: View;
   repoPath: string | null;
   repoHistory: string[];
+  activeRepos: string[];
   filterByGitAuthors: boolean;
   workSchedule: WorkSchedule;
   aiConfig: AIConfig;

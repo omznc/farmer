@@ -1,12 +1,12 @@
 [package]
-name = "profico-farmer"
+name = "farmer"
 version = "0.1.0"
-description = "Git-powered time tracking for Harvest"
+description = "Git-powered time tracking desktop application"
 authors = ["omznc"]
 edition = "2021"
 
 [lib]
-name = "profico_farmer_lib"
+name = "farmer_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -27,6 +27,8 @@ thiserror = "2.0"
 anyhow = "1.0"
 reqwest = { version = "0.12", features = ["json"] }
 tauri-plugin-clipboard-manager = "2.3.2"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 
 [features]
 default = ["custom-protocol"]
