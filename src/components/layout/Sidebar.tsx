@@ -1,4 +1,5 @@
 import { Folder, Info, type LucideIcon, Settings } from "lucide-react";
+import { useAutoUpdate } from "../../hooks/useAutoUpdate";
 import { cn } from "../../lib/utils";
 import { useAppStore } from "../../stores/appStore";
 import type { View } from "../../types";
@@ -26,6 +27,8 @@ const sidebarItems: SidebarItem[] = [
 export function Sidebar() {
 	const currentView = useAppStore((state) => state.currentView);
 	const setCurrentView = useAppStore((state) => state.setCurrentView);
+	const { status } = useAutoUpdate(true); // Auto-check for updates
+	const hasUpdate = status === "available";
 
 	return (
 		<aside className="flex select-none w-56 flex-col border-r border-border bg-bg-secondary rounded-bl-lg overflow-hidden">
@@ -46,7 +49,12 @@ export function Sidebar() {
 						)}
 					>
 						<span className="flex items-center gap-3">
-							<item.icon className="w-4 h-4" />
+							<span className="relative">
+								<item.icon className="w-4 h-4" />
+								{item.id === "about" && hasUpdate && (
+									<span className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full animate-pulse" />
+								)}
+							</span>
 							<span className="font-medium">{item.label}</span>
 						</span>
 						{item.shortcut && (

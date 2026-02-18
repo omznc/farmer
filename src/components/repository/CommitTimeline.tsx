@@ -180,7 +180,11 @@ function WorkDayCard({
 										<span
 											key={repoName}
 											className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${color.bg} ${color.text}`}
-											title={isLocal ? "Local repository (no remote)" : commit?.remoteUrl}
+											title={
+												isLocal
+													? "Local repository (no remote)"
+													: commit?.remoteUrl
+											}
 										>
 											{repoName}
 											{isLocal && " 📍"}
@@ -398,7 +402,11 @@ function CommitItem({
 						{commit.repoName && (
 							<span
 								className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0 ${color.bg} ${color.text}`}
-								title={!commit.remoteUrl ? "Local repository (no remote)" : commit.remoteUrl}
+								title={
+									!commit.remoteUrl
+										? "Local repository (no remote)"
+										: commit.remoteUrl
+								}
 							>
 								{commit.repoName}
 								{!commit.remoteUrl && " 📍"}

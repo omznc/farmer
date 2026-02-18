@@ -93,7 +93,12 @@ export function RepositoryView() {
 				const authorsToUse = shouldFilter ? gitAuthors : [];
 
 				console.log("[Repository] Analyzing repos:", paths);
-				console.log("[Repository] Filter by authors:", shouldFilter, "Authors:", authorsToUse);
+				console.log(
+					"[Repository] Filter by authors:",
+					shouldFilter,
+					"Authors:",
+					authorsToUse,
+				);
 
 				const commitsByDate = new Map<string, Commit[]>();
 
@@ -105,11 +110,15 @@ export function RepositoryView() {
 							gitAuthors: authorsToUse,
 						});
 
-						console.log(`[Repository] Got ${days.length} work days from ${path}`);
+						console.log(
+							`[Repository] Got ${days.length} work days from ${path}`,
+						);
 						const repoName = getRepoName(path);
 
 						for (const day of days) {
-							console.log(`[Repository] Processing day ${day.date} with ${day.commits.length} commits`);
+							console.log(
+								`[Repository] Processing day ${day.date} with ${day.commits.length} commits`,
+							);
 							const commitsWithRepo = day.commits.map((c) => ({
 								...c,
 								repoPath: path,
@@ -125,7 +134,9 @@ export function RepositoryView() {
 					}
 				}
 
-				console.log(`[Repository] Total dates with commits: ${commitsByDate.size}`);
+				console.log(
+					`[Repository] Total dates with commits: ${commitsByDate.size}`,
+				);
 
 				const mergedWorkDays: WorkDay[] = [];
 				commitsByDate.forEach((commits, date) => {
@@ -159,7 +170,9 @@ export function RepositoryView() {
 					(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
 				);
 
-				console.log(`[Repository] Setting ${mergedWorkDays.length} work days with ${mergedWorkDays.reduce((sum, day) => sum + day.totalCommits, 0)} total commits`);
+				console.log(
+					`[Repository] Setting ${mergedWorkDays.length} work days with ${mergedWorkDays.reduce((sum, day) => sum + day.totalCommits, 0)} total commits`,
+				);
 				setWorkDays(mergedWorkDays);
 
 				if (paths.length === 1) {
