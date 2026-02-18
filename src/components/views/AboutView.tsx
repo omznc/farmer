@@ -63,7 +63,7 @@ export function AboutView() {
 										Version {updateInfo.version} is ready to install
 									</p>
 									{updateInfo.body && (
-										<p className="text-xs text-fg-muted mt-2 max-w-md line-clamp-3">
+										<p className="text-xs text-fg-muted mt-2 max-w-md">
 											{updateInfo.body}
 										</p>
 									)}
@@ -73,7 +73,6 @@ export function AboutView() {
 								variant="primary"
 								size="sm"
 								onClick={installUpdate}
-								disabled={status === "downloading"}
 							>
 								Install Now
 							</Button>
