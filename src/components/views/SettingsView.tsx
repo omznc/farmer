@@ -197,47 +197,50 @@ export function SettingsView() {
 							</div>
 						</div>
 
-						<div>
-							<label className="block text-sm font-medium text-fg-primary mb-2">
-								Weekend Work Attribution
-							</label>
-							<div className="flex gap-2">
-								<button
-									onClick={() =>
-										setWorkSchedule({
-											...workSchedule,
-											weekendAttribution: "friday",
-										})
-									}
-									className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-										workSchedule.weekendAttribution === "friday"
-											? "bg-accent text-black"
-											: "bg-bg-tertiary text-fg-secondary hover:bg-bg-hover"
-									}`}
-								>
-									Previous Friday
-								</button>
-								<button
-									onClick={() =>
-										setWorkSchedule({
-											...workSchedule,
-											weekendAttribution: "monday",
-										})
-									}
-									className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-										workSchedule.weekendAttribution === "monday"
-											? "bg-accent text-black"
-											: "bg-bg-tertiary text-fg-secondary hover:bg-bg-hover"
-									}`}
-								>
-									Next Monday
-								</button>
-							</div>
-							<p className="text-xs text-fg-muted mt-1">
-								Attribute weekend commits to the previous Friday or the next
-								Monday
-							</p>
-						</div>
+						{!workSchedule.workingDays.includes("saturday") &&
+							!workSchedule.workingDays.includes("sunday") && (
+								<div>
+									<label className="block text-sm font-medium text-fg-primary mb-2">
+										Weekend Work Attribution
+									</label>
+									<div className="flex gap-2">
+										<button
+											onClick={() =>
+												setWorkSchedule({
+													...workSchedule,
+													weekendAttribution: "friday",
+												})
+											}
+											className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+												workSchedule.weekendAttribution === "friday"
+													? "bg-accent text-black"
+													: "bg-bg-tertiary text-fg-secondary hover:bg-bg-hover"
+											}`}
+										>
+											Previous Friday
+										</button>
+										<button
+											onClick={() =>
+												setWorkSchedule({
+													...workSchedule,
+													weekendAttribution: "monday",
+												})
+											}
+											className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+												workSchedule.weekendAttribution === "monday"
+													? "bg-accent text-black"
+													: "bg-bg-tertiary text-fg-secondary hover:bg-bg-hover"
+											}`}
+										>
+											Next Monday
+										</button>
+									</div>
+									<p className="text-xs text-fg-muted mt-1">
+										Attribute weekend commits to the previous Friday or the next
+										Monday
+									</p>
+								</div>
+							)}
 
 						<div>
 							<label className="block text-sm font-medium text-fg-primary mb-2">

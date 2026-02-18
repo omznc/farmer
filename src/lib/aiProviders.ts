@@ -8,14 +8,18 @@ async function commandExists(command: string): Promise<boolean> {
 		const isWindows =
 			navigator.userAgent.toLowerCase().includes("win") ||
 			navigator.platform.toLowerCase().includes("win") ||
-			// @ts-ignore - process.platform may not exist in browser context
+			// @ts-expect-error - process.platform may not exist in browser context
 			(typeof process !== "undefined" && process.platform === "win32");
 
 		const checkCmd = isWindows ? "where" : "which";
-		console.log(`[commandExists] Checking for '${command}' using '${checkCmd}' (Windows: ${isWindows})`);
+		console.log(
+			`[commandExists] Checking for '${command}' using '${checkCmd}' (Windows: ${isWindows})`,
+		);
 
 		const output = await Command.create(checkCmd, [command]).execute();
-		console.log(`[commandExists] ${command} - exit code: ${output.code}, stdout: ${output.stdout.substring(0, 100)}`);
+		console.log(
+			`[commandExists] ${command} - exit code: ${output.code}, stdout: ${output.stdout.substring(0, 100)}`,
+		);
 		return output.code === 0;
 	} catch (error) {
 		console.error(`[commandExists] Error checking ${command}:`, error);

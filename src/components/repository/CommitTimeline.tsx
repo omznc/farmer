@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { Clock, Copy, GitCommit, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { isAIConfigured, summarizeCommits } from "../../lib/ai";
+import { useAppStore } from "../../stores/appStore";
 import type { Commit, WorkDay } from "../../types";
 import { Button } from "../ui/Button";
 import { Toast } from "../ui/Toast";
@@ -89,7 +90,8 @@ function WorkDayCard({
 }) {
 	const [toast, setToast] = useState<{ x: number; y: number } | null>(null);
 	const [isAiLoading, setIsAiLoading] = useState(false);
-	const [aiSummary, setAiSummary] = useState<string | null>(null);
+	const aiSummary = useAppStore((state) => state.aiSummaries[workDay.date]);
+	const setAISummary = useAppStore((state) => state.setAISummary);
 	const aiConfigured = isAIConfigured();
 	const date = new Date(workDay.date);
 	const formattedDate = format(date, "EEEE, MMMM d, yyyy");
@@ -121,7 +123,6 @@ function WorkDayCard({
 	const generateAISummary = async () => {
 		console.log("[CommitTimeline] AI Summary clicked");
 		setIsAiLoading(true);
-		setAiSummary(null);
 		try {
 			const commitMessages = workDay.commits.map((c) => {
 				const repoPrefix = c.repoName ? `[${c.repoName}] ` : "";
@@ -132,7 +133,7 @@ function WorkDayCard({
 			const summary = await summarizeCommits(commitMessages);
 			console.log("[CommitTimeline] Got summary:", summary);
 
-			setAiSummary(summary);
+			setAISummary(workDay.date, summary);
 		} catch (err) {
 			console.error("[CommitTimeline] AI summarization failed:", err);
 			alert(`AI summarization failed: ${err}`);

@@ -3,6 +3,7 @@ import { create } from "zustand";
 import type { AIConfig, AppState, WorkDay, WorkSchedule } from "../types";
 
 interface AppStore extends AppState {
+	aiSummaries: Record<string, string>;
 	setCurrentView: (view: AppState["currentView"]) => void;
 	setRepoPath: (path: string | null) => void;
 	addRepoToHistory: (path: string) => void;
@@ -12,6 +13,8 @@ interface AppStore extends AppState {
 	setWorkSchedule: (schedule: WorkSchedule) => void;
 	setAIConfig: (config: AIConfig) => void;
 	setWorkDays: (days: WorkDay[]) => void;
+	setAISummary: (date: string, summary: string) => void;
+	getAISummary: (date: string) => string | undefined;
 	setLoading: (loading: boolean) => void;
 	setError: (error: string | null) => void;
 	clearError: () => void;
@@ -37,6 +40,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
 		selectedProvider: undefined,
 	},
 	workDays: [],
+	aiSummaries: {},
 	isLoading: false,
 	error: null,
 
@@ -86,6 +90,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
 		get().saveSettings();
 	},
 	setWorkDays: (days) => set({ workDays: days }),
+	setAISummary: (date, summary) =>
+		set((state) => ({
+			aiSummaries: { ...state.aiSummaries, [date]: summary },
+		})),
+	getAISummary: (date) => get().aiSummaries[date],
 	setLoading: (loading) => set({ isLoading: loading }),
 	setError: (error) => set({ error }),
 	clearError: () => set({ error: null }),

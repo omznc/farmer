@@ -1,9 +1,17 @@
-import { AlertCircle, CheckCircle, Download, Github, Copy, Trash2, Terminal } from "lucide-react";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import {
+	AlertCircle,
+	CheckCircle,
+	Copy,
+	Download,
+	Github,
+	Terminal,
+	Trash2,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useAutoUpdate } from "../../hooks/useAutoUpdate";
 import { useConsoleCapture } from "../../hooks/useConsoleCapture";
 import { Button } from "../ui/Button";
-import { useState, useRef, useEffect } from "react";
-import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 
 export function AboutView() {
 	const {
@@ -108,11 +116,7 @@ export function AboutView() {
 									)}
 								</div>
 							</div>
-							<Button
-								variant="primary"
-								size="sm"
-								onClick={installUpdate}
-							>
+							<Button variant="primary" size="sm" onClick={installUpdate}>
 								Install Now
 							</Button>
 						</div>
@@ -180,8 +184,9 @@ export function AboutView() {
 								<p className="text-xs text-fg-secondary mt-1">{error}</p>
 								{error.includes("Could not fetch") && (
 									<p className="text-xs text-fg-muted mt-2">
-										💡 Your current version (v{currentVersion}) doesn't have updater support.
-										Updates will work automatically once you install v0.1.2 or newer from GitHub Releases.
+										💡 Your current version (v{currentVersion}) doesn't have
+										updater support. Updates will work automatically once you
+										install v0.1.2 or newer from GitHub Releases.
 									</p>
 								)}
 							</div>
@@ -246,13 +251,12 @@ export function AboutView() {
 								Application Logs
 							</h3>
 							<p className="text-xs text-fg-muted mt-1">
-								{logs.length} log entries • Click to {showLogs ? "hide" : "show"}
+								{logs.length} log entries • Click to{" "}
+								{showLogs ? "hide" : "show"}
 							</p>
 						</div>
 					</div>
-					<div className="text-xs text-fg-muted">
-						{showLogs ? "▼" : "▶"}
-					</div>
+					<div className="text-xs text-fg-muted">{showLogs ? "▼" : "▶"}</div>
 				</button>
 
 				{showLogs && (
@@ -315,7 +319,8 @@ export function AboutView() {
 
 						<div className="p-3 bg-bg-tertiary border-t border-border">
 							<p className="text-xs text-fg-muted">
-								💡 Tip: Use these logs to debug issues. Copy and include in bug reports.
+								💡 Tip: Use these logs to debug issues. Copy and include in bug
+								reports.
 							</p>
 						</div>
 					</div>
