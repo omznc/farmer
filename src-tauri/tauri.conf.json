@@ -42,7 +42,7 @@
 		"updater": {
 			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZGMkY3NDgzRDc0RjlERTAKUldUZ25VL1hnM1F2YjFQNkt0YWJJTTBjQ2R0cmlpSmIvdXlURU5hYkEydjdMekliK0I1VDFPc3oK",
 			"endpoints": [
-				"https://github.com/omznc/farmer/releases/latest/download/{{target}}-{{arch}}.json"
+				"https://github.com/omznc/farmer/releases/latest/download/latest.json"
 			]
 		}
 	}
