@@ -1,52 +1,52 @@
 {
-  "$schema": "../gen/schemas/desktop-schema.json",
-  "identifier": "default",
-  "description": "Default permissions for Farmer",
-  "windows": ["main"],
-  "permissions": [
-    "core:default",
-    "core:event:allow-emit",
-    "core:event:allow-emit-to",
-    "core:event:allow-listen",
-    "core:event:allow-unlisten",
-    "core:window:allow-show",
-    "core:window:default",
-    "core:window:allow-start-dragging",
-    "core:window:allow-hide",
-    "core:window:allow-set-focus",
-    "core:window:allow-minimize",
-    "core:window:allow-toggle-maximize",
-    "core:window:allow-close",
-    "opener:default",
-    "dialog:default",
-    "dialog:allow-open",
-    "clipboard-manager:default",
-    "clipboard-manager:allow-read-text",
-    "clipboard-manager:allow-write-text",
-    "shell:default",
-    "shell:allow-open",
-    {
-      "identifier": "shell:allow-execute",
-      "allow": [
-        {
-          "name": "which",
-          "cmd": "which",
-          "args": true,
-          "sidecar": false
-        },
-        {
-          "name": "claude",
-          "cmd": "claude",
-          "args": true,
-          "sidecar": false
-        },
-        {
-          "name": "opencode",
-          "cmd": "opencode",
-          "args": true,
-          "sidecar": false
-        }
-      ]
-    }
-  ]
+	"$schema": "../gen/schemas/desktop-schema.json",
+	"identifier": "default",
+	"description": "Default permissions for Farmer",
+	"windows": ["main"],
+	"permissions": [
+		"core:default",
+		"core:event:allow-emit",
+		"core:event:allow-emit-to",
+		"core:event:allow-listen",
+		"core:event:allow-unlisten",
+		"core:window:allow-show",
+		"core:window:default",
+		"core:window:allow-start-dragging",
+		"core:window:allow-hide",
+		"core:window:allow-set-focus",
+		"core:window:allow-minimize",
+		"core:window:allow-toggle-maximize",
+		"core:window:allow-close",
+		"opener:default",
+		"dialog:default",
+		"dialog:allow-open",
+		"clipboard-manager:default",
+		"clipboard-manager:allow-read-text",
+		"clipboard-manager:allow-write-text",
+		"shell:default",
+		"shell:allow-open",
+		{
+			"identifier": "shell:allow-execute",
+			"allow": [
+				{
+					"name": "which",
+					"cmd": "which",
+					"args": true,
+					"sidecar": false
+				},
+				{
+					"name": "claude",
+					"cmd": "claude",
+					"args": true,
+					"sidecar": false
+				},
+				{
+					"name": "opencode",
+					"cmd": "opencode",
+					"args": true,
+					"sidecar": false
+				}
+			]
+		}
+	]
 }

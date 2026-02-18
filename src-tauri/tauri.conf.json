@@ -1,49 +1,49 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Farmer",
-  "version": "0.1.0",
-  "identifier": "com.omznc.farmer",
-  "build": {
-    "beforeDevCommand": "bun run dev",
-    "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run build",
-    "frontendDist": "../dist"
-  },
-  "app": {
-    "windows": [
-      {
-        "title": "Farmer",
-        "width": 1200,
-        "height": 800,
-        "resizable": true,
-        "fullscreen": false,
-        "decorations": false,
-        "transparent": true
-      }
-    ],
-    "security": {
-      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://accounts.google.com https://www.googleapis.com https://api.openai.com;",
-      "freezePrototype": true
-    }
-  },
-  "bundle": {
-    "active": true,
-    "createUpdaterArtifacts": true,
-    "targets": "all",
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ]
-  },
-  "plugins": {
-    "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZGMkY3NDgzRDc0RjlERTAKUldUZ25VL1hnM1F2YjFQNkt0YWJJTTBjQ2R0cmlpSmIvdXlURU5hYkEydjdMekliK0I1VDFPc3oK",
-      "endpoints": [
-        "https://github.com/omznc/farmer/releases/latest/download/{{target}}-{{arch}}.json"
-      ]
-    }
-  }
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "Farmer",
+	"version": "0.1.0",
+	"identifier": "com.omznc.farmer",
+	"build": {
+		"beforeDevCommand": "bun run dev",
+		"devUrl": "http://localhost:1420",
+		"beforeBuildCommand": "bun run build",
+		"frontendDist": "../dist"
+	},
+	"app": {
+		"windows": [
+			{
+				"title": "Farmer",
+				"width": 1200,
+				"height": 800,
+				"resizable": true,
+				"fullscreen": false,
+				"decorations": false,
+				"transparent": true
+			}
+		],
+		"security": {
+			"csp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://accounts.google.com https://www.googleapis.com https://api.openai.com;",
+			"freezePrototype": true
+		}
+	},
+	"bundle": {
+		"active": true,
+		"createUpdaterArtifacts": true,
+		"targets": "all",
+		"icon": [
+			"icons/32x32.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
+		]
+	},
+	"plugins": {
+		"updater": {
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZGMkY3NDgzRDc0RjlERTAKUldUZ25VL1hnM1F2YjFQNkt0YWJJTTBjQ2R0cmlpSmIvdXlURU5hYkEydjdMekliK0I1VDFPc3oK",
+			"endpoints": [
+				"https://github.com/omznc/farmer/releases/latest/download/{{target}}-{{arch}}.json"
+			]
+		}
+	}
 }

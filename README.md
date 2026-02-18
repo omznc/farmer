@@ -62,8 +62,8 @@ bun run build:windows # Windows (cross-compile)
 
 ```bash
 bun run typecheck   # TypeScript type checking
-bun run lint        # ESLint
-bun run lint:fix    # ESLint with auto-fix
+bun run lint        # Biome
+bun run lint:fix    # Biome with auto-fix
 ```
 
 ## Releasing
@@ -73,16 +73,6 @@ Releases are automated via GitHub Actions:
 1. Update the version in `src-tauri/tauri.conf.json`
 2. Push to the `release` branch
 3. The workflow will build all platforms and create a draft release
-
-### Required Secrets
-
-- `TAURI_SIGNING_PRIVATE_KEY`: Private key for signing updates
-- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: Password for the private key
-
-Generate keys with:
-```bash
-bun tauri signer generate
-```
 
 ## Tech Stack
 

@@ -1,4 +1,4 @@
 export interface ViewComponentProps {
-  view: "repository" | "settings";
-  children: React.ReactNode;
+	view: "repository" | "settings";
+	children: React.ReactNode;
 }
