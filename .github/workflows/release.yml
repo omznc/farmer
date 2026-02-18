@@ -81,10 +81,10 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
-                  mkdir -p src-tauri/target/release/bundle/deb
-                  gh release download v${{ steps.version.outputs.version }} --pattern "Farmer_*_amd64.deb" --dir src-tauri/target/release/bundle/deb/
-                  ls -la src-tauri/target/release/bundle/deb/
-                  mv src-tauri/target/release/bundle/deb/Farmer_*_amd64.deb src-tauri/target/release/bundle/deb/farmer_${{ steps.version.outputs.version }}_amd64.deb || true
+                  mkdir -p target/release/bundle/deb
+                  gh release download v${{ steps.version.outputs.version }} --pattern "Farmer_*_amd64.deb" --dir target/release/bundle/deb/
+                  ls -la target/release/bundle/deb/
+                  mv target/release/bundle/deb/Farmer_*_amd64.deb target/release/bundle/deb/farmer_${{ steps.version.outputs.version }}_amd64.deb || true
 
             - name: Install flatpak-builder
               run: |
@@ -93,8 +93,8 @@ jobs:
                   flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
             - name: Build Flatpak
-              working-directory: src-tauri
               run: |
+                  cd src-tauri
                   flatpak-builder --user --install-deps-from=flathub --arch=x86_64 --force-clean build-dir flatpak-builder.yaml
                   flatpak-builder --user --repo=repo --force-clean build-dir flatpak-builder.yaml
                   flatpak build-bundle repo farmer.flatpak com.omznc.farmer
