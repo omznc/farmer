@@ -21,7 +21,7 @@ export interface UseAutoUpdateReturn {
 	status: UpdateStatus;
 	updateInfo: UpdateInfo | null;
 	error: string | null;
-	checkForUpdates: () => Promise<void>;
+	checkForUpdates: (silent?: boolean) => Promise<void>;
 	installUpdate: () => Promise<void>;
 	downloadProgress: number;
 }
@@ -37,7 +37,7 @@ export function useAutoUpdate(
 	const [error, setError] = useState<string | null>(null);
 	const [downloadProgress, setDownloadProgress] = useState(0);
 
-	const checkForUpdates = useCallback(async () => {
+	const checkForUpdates = useCallback(async (silent = false) => {
 		try {
 			setStatus("checking");
 			setError(null);
@@ -62,8 +62,16 @@ export function useAutoUpdate(
 			}
 		} catch (err) {
 			console.error("[AutoUpdate] Failed to check for updates:", err);
-			setError(String(err));
-			setStatus("error");
+
+			// Only show error state for manual checks
+			if (!silent) {
+				setError(String(err));
+				setStatus("error");
+			} else {
+				// Silent fail - just log and reset to idle
+				console.log("[AutoUpdate] Silent check failed, resetting to idle");
+				setStatus("idle");
+			}
 		}
 	}, []);
 
@@ -132,13 +140,13 @@ export function useAutoUpdate(
 	useEffect(() => {
 		if (!autoCheck) return;
 
-		// Check immediately on mount
-		checkForUpdates();
+		// Check immediately on mount (silently)
+		checkForUpdates(true);
 
-		// Set up interval for periodic checks
+		// Set up interval for periodic checks (silently)
 		const intervalId = setInterval(() => {
 			console.log("[AutoUpdate] Periodic update check");
-			checkForUpdates();
+			checkForUpdates(true);
 		}, checkIntervalMs);
 
 		return () => {

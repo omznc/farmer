@@ -4,12 +4,21 @@ import type { AIProvider } from "../types";
 async function commandExists(command: string): Promise<boolean> {
 	try {
 		// Use 'where' on Windows, 'which' on Unix
-		const checkCmd = navigator.platform.toLowerCase().includes("win")
-			? "where"
-			: "which";
+		// Check multiple methods for Windows detection
+		const isWindows =
+			navigator.userAgent.toLowerCase().includes("win") ||
+			navigator.platform.toLowerCase().includes("win") ||
+			// @ts-ignore - process.platform may not exist in browser context
+			(typeof process !== "undefined" && process.platform === "win32");
+
+		const checkCmd = isWindows ? "where" : "which";
+		console.log(`[commandExists] Checking for '${command}' using '${checkCmd}' (Windows: ${isWindows})`);
+
 		const output = await Command.create(checkCmd, [command]).execute();
+		console.log(`[commandExists] ${command} - exit code: ${output.code}, stdout: ${output.stdout.substring(0, 100)}`);
 		return output.code === 0;
-	} catch {
+	} catch (error) {
+		console.error(`[commandExists] Error checking ${command}:`, error);
 		return false;
 	}
 }
@@ -43,7 +52,10 @@ async function checkClaudeCode(): Promise<AIProvider | null> {
 }
 
 async function checkOpenCode(): Promise<AIProvider | null> {
-	if (!(await commandExists("opencode"))) return null;
+	console.log("[checkOpenCode] Checking for OpenCode...");
+	const exists = await commandExists("opencode");
+	console.log("[checkOpenCode] OpenCode exists:", exists);
+	if (!exists) return null;
 	return {
 		id: "opencode",
 		type: "opencode",
