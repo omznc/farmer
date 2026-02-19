@@ -1,13 +1,15 @@
 import { AlertCircle } from "lucide-react";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Header } from "./components/layout/Header";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TitleBar } from "./components/layout/TitleBar";
 import { AboutView } from "./components/views/AboutView";
+import { DestroyUniverseView } from "./components/views/DestroyUniverseView";
 import { RepositoryView } from "./components/views/RepositoryView";
 import { SettingsView } from "./components/views/SettingsView";
 import { initConsoleCapture } from "./hooks/useConsoleCapture";
+import { useKonamiCode } from "./hooks/useKonamiCode";
 import { useAppStore } from "./stores/appStore";
 
 initConsoleCapture();
@@ -17,6 +19,14 @@ function App() {
 	const error = useAppStore((state) => state.error);
 	const clearError = useAppStore((state) => state.clearError);
 	const loadSettings = useAppStore((state) => state.loadSettings);
+	const konamiActivated = useAppStore((state) => state.konamiActivated);
+	const setKonamiActivated = useAppStore((state) => state.setKonamiActivated);
+
+	const handleKonamiCode = useCallback(() => {
+		setKonamiActivated(true);
+	}, [setKonamiActivated]);
+
+	useKonamiCode(handleKonamiCode);
 
 	useEffect(() => {
 		loadSettings();
@@ -44,6 +54,8 @@ function App() {
 				return <SettingsView />;
 			case "about":
 				return <AboutView />;
+			case "destroy_universe":
+				return <DestroyUniverseView />;
 			default:
 				return <RepositoryView />;
 		}
@@ -51,7 +63,9 @@ function App() {
 
 	return (
 		<ErrorBoundary>
-			<div className="flex flex-col h-screen overflow-hidden rounded-lg">
+			<div
+				className={`flex flex-col h-screen overflow-hidden rounded-lg ${konamiActivated ? "crt-effect" : ""}`}
+			>
 				<TitleBar />
 
 				{error && (

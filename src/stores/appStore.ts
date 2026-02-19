@@ -14,6 +14,8 @@ import type {
 interface AppStore extends AppState {
 	aiSummaries: Record<string, string>;
 	aiLoadingDates: Record<string, boolean>;
+	konamiActivated: boolean;
+	setKonamiActivated: (activated: boolean) => void;
 	setCurrentView: (view: AppState["currentView"]) => void;
 	setRepoPath: (path: string | null) => void;
 	addRepoToHistory: (path: string) => void;
@@ -98,7 +100,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
 	aiLoadingDates: {},
 	isLoading: false,
 	error: null,
+	konamiActivated: false,
 
+	setKonamiActivated: (activated) => {
+		set({ konamiActivated: activated });
+		get().saveSettings();
+	},
 	setCurrentView: (view) => {
 		set({ currentView: view });
 		get().saveSettings();
@@ -193,6 +200,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
 				filterByGitAuthors?: boolean | null;
 				copySettings?: CopySettings | null;
 				deepAnalysisSettings?: DeepAnalysisSettings | null;
+				konamiActivated?: boolean | null;
 			}>("load_settings");
 
 			const loadedSchedule = settings.workSchedule;
@@ -216,6 +224,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
 				copySettings: settings.copySettings ?? DEFAULT_COPY_SETTINGS,
 				deepAnalysisSettings:
 					settings.deepAnalysisSettings ?? DEFAULT_DEEP_ANALYSIS_SETTINGS,
+				konamiActivated: settings.konamiActivated ?? false,
 			});
 		} catch (error) {
 			console.error("Failed to load settings:", error);
@@ -239,6 +248,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
 				filterByGitAuthors: state.filterByGitAuthors,
 				copySettings: state.copySettings,
 				deepAnalysisSettings: state.deepAnalysisSettings,
+				konamiActivated: state.konamiActivated,
 			});
 		} catch (error) {
 			console.error("Failed to save settings:", error);

@@ -74,7 +74,7 @@ export interface AppState {
 	error: string | null;
 }
 
-export type View = "repository" | "settings" | "about";
+export type View = "repository" | "settings" | "about" | "destroy_universe";
 
 export interface FileDiff {
 	path: string;

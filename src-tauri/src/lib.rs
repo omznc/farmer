@@ -32,6 +32,7 @@ async fn save_settings(
     filter_by_git_authors: Option<bool>,
     copy_settings: Option<CopySettings>,
     deep_analysis_settings: Option<DeepAnalysisSettings>,
+    konami_activated: Option<bool>,
 ) -> Result<(), String> {
     let settings_path = get_settings_path()?;
 
@@ -44,6 +45,7 @@ async fn save_settings(
         "filterByGitAuthors": filter_by_git_authors,
         "copySettings": copy_settings,
         "deepAnalysisSettings": deep_analysis_settings,
+        "konamiActivated": konami_activated,
     });
 
     fs::write(

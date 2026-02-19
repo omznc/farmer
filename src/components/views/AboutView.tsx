@@ -354,6 +354,9 @@ export function AboutView() {
 				<p className="text-xs text-fg-muted">
 					Built with Rust and React (thanks Tauri)
 				</p>
+				<p className="text-[10px] text-fg-muted/30 select-none mt-2">
+					↑↑↓↓←→←→BA
+				</p>
 			</div>
 		</div>
 	);
