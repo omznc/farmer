@@ -86,3 +86,29 @@ pub struct CopySettings {
 fn default_include_day_title() -> bool {
     true
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeepAnalysisSettings {
+    #[serde(rename = "enabled", default)]
+    pub enabled: bool,
+    #[serde(rename = "maxFileSizeKB", default = "default_max_file_size")]
+    pub max_file_size_kb: u32,
+    #[serde(rename = "maxFilesPerCommit", default = "default_max_files")]
+    pub max_files_per_commit: u32,
+}
+
+fn default_max_file_size() -> u32 {
+    50
+}
+
+fn default_max_files() -> u32 {
+    20
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileDiff {
+    pub path: String,
+    pub additions: usize,
+    pub deletions: usize,
+    pub diff: String,
+}

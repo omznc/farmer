@@ -1,9 +1,14 @@
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { format } from "date-fns";
-import { Clock, Copy, GitCommit, Sparkles } from "lucide-react";
+import { Clock, Copy, GitCommit, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 import { isAIConfigured, summarizeCommitsStream } from "../../lib/ai";
-import { useAppStore } from "../../stores/appStore";
+import {
+	cancelAIGeneration,
+	registerAICancellable,
+	unregisterAICancellable,
+	useAppStore,
+} from "../../stores/appStore";
 import type { Commit, WorkDay } from "../../types";
 import { Button } from "../ui/Button";
 import { Toast } from "../ui/Toast";
@@ -89,13 +94,27 @@ function WorkDayCard({
 	repoColorMap?: Map<string, { bg: string; text: string; border: string }>;
 }) {
 	const [toast, setToast] = useState<{ x: number; y: number } | null>(null);
-	const [isAiLoading, setIsAiLoading] = useState(false);
+	const [loadingPhase, setLoadingPhase] = useState<string>("");
 	const aiSummary = useAppStore((state) => state.aiSummaries[workDay.date]);
 	const setAISummary = useAppStore((state) => state.setAISummary);
+	const setAILoading = useAppStore((state) => state.setAILoading);
+	const isAiLoading = useAppStore(
+		(state) => state.aiLoadingDates[workDay.date] ?? false,
+	);
 	const copySettings = useAppStore((state) => state.copySettings);
+	const deepAnalysisSettings = useAppStore(
+		(state) => state.deepAnalysisSettings,
+	);
 	const aiConfigured = isAIConfigured();
 	const date = new Date(workDay.date);
 	const formattedDate = format(date, "EEEE, MMMM d, yyyy");
+
+	const cancelGeneration = () => {
+		console.log("[CommitTimeline] Cancelling generation for", workDay.date);
+		cancelAIGeneration(workDay.date);
+		setAILoading(workDay.date, false);
+		setLoadingPhase("");
+	};
 
 	const uniqueRepos = [
 		...new Set(workDay.commits.map((c) => c.repoName).filter(Boolean)),
@@ -126,7 +145,12 @@ function WorkDayCard({
 
 	const generateAISummary = async () => {
 		console.log("[CommitTimeline] AI Summary clicked");
-		setIsAiLoading(true);
+		setAILoading(workDay.date, true);
+		setLoadingPhase(
+			deepAnalysisSettings.enabled
+				? "Analyzing code changes..."
+				: "Starting...",
+		);
 		setAISummary(workDay.date, "");
 		try {
 			const commitMessages = workDay.commits.map((c) => {
@@ -135,19 +159,32 @@ function WorkDayCard({
 			});
 			console.log("[CommitTimeline] Commit messages:", commitMessages);
 
-			const summary = await summarizeCommitsStream(commitMessages, (chunk) => {
-				const current = useAppStore.getState().aiSummaries[workDay.date] || "";
-				setAISummary(workDay.date, current + chunk);
-			});
+			const cancellable = summarizeCommitsStream(
+				commitMessages,
+				(chunk) => {
+					setLoadingPhase("Generating summary...");
+					const current =
+						useAppStore.getState().aiSummaries[workDay.date] || "";
+					setAISummary(workDay.date, current + chunk);
+				},
+				workDay.commits,
+			);
+			registerAICancellable(workDay.date, cancellable);
+
+			const summary = await cancellable.promise;
 			console.log("[CommitTimeline] Got final summary:", summary);
 
-			setAISummary(workDay.date, summary);
+			if (summary) {
+				setAISummary(workDay.date, summary);
+			}
 		} catch (err) {
 			console.error("[CommitTimeline] AI summarization failed:", err);
 			setAISummary(workDay.date, "");
 			alert(`AI summarization failed: ${err}`);
 		} finally {
-			setIsAiLoading(false);
+			setAILoading(workDay.date, false);
+			setLoadingPhase("");
+			unregisterAICancellable(workDay.date);
 		}
 	};
 
@@ -252,28 +289,42 @@ function WorkDayCard({
 										className={`w-4 h-4 text-purple-500 ${isAiLoading ? "animate-pulse" : ""}`}
 									/>
 									<span className="text-xs font-medium text-purple-500">
-										{isAiLoading ? "Generating summary..." : "AI Summary"}
+										{isAiLoading
+											? loadingPhase || "Generating summary..."
+											: "AI Summary"}
 									</span>
 								</div>
-								{!isAiLoading && aiSummary && (
-									<div className="flex items-center gap-2">
+								<div className="flex items-center gap-2">
+									{isAiLoading && (
 										<Button
 											variant="secondary"
 											size="sm"
-											onClick={copyAISummary}
+											onClick={cancelGeneration}
 										>
-											<Copy className="w-3 h-3 mr-1.5" />
-											Copy
+											<X className="w-3 h-3 mr-1.5" />
+											Cancel
 										</Button>
-										<Button
-											variant="secondary"
-											size="sm"
-											onClick={generateAISummary}
-										>
-											Regenerate
-										</Button>
-									</div>
-								)}
+									)}
+									{!isAiLoading && aiSummary && (
+										<>
+											<Button
+												variant="secondary"
+												size="sm"
+												onClick={copyAISummary}
+											>
+												<Copy className="w-3 h-3 mr-1.5" />
+												Copy
+											</Button>
+											<Button
+												variant="secondary"
+												size="sm"
+												onClick={generateAISummary}
+											>
+												Regenerate
+											</Button>
+										</>
+									)}
+								</div>
 							</div>
 							{aiSummary ? (
 								<p className="text-sm text-fg-primary leading-relaxed">

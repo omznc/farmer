@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface LogEntry {
 	timestamp: Date;
@@ -6,87 +6,90 @@ interface LogEntry {
 	message: string;
 }
 
-export function useConsoleCapture(maxLogs = 500) {
-	const [logs, setLogs] = useState<LogEntry[]>([]);
-	const originalConsole = useRef<{
-		log: typeof console.log;
-		info: typeof console.info;
-		warn: typeof console.warn;
-		error: typeof console.error;
-	} | null>(null);
+const MAX_LOGS = 500;
+
+let globalLogs: LogEntry[] = [];
+const logListeners: Set<() => void> = new Set();
+let isInitialized = false;
+
+function addLog(level: LogEntry["level"], args: unknown[]) {
+	const message = args
+		.map((arg) => {
+			if (typeof arg === "object") {
+				try {
+					return JSON.stringify(arg, null, 2);
+				} catch {
+					return String(arg);
+				}
+			}
+			return String(arg);
+		})
+		.join(" ");
+
+	globalLogs = [
+		...globalLogs,
+		{
+			timestamp: new Date(),
+			level,
+			message,
+		},
+	].slice(-MAX_LOGS);
+
+	for (const listener of logListeners) {
+		listener();
+	}
+}
+
+export function initConsoleCapture() {
+	if (isInitialized) return;
+
+	const originalLog = console.log;
+	const originalInfo = console.info;
+	const originalWarn = console.warn;
+	const originalError = console.error;
+
+	console.log = (...args: unknown[]) => {
+		originalLog(...args);
+		addLog("log", args);
+	};
+
+	console.info = (...args: unknown[]) => {
+		originalInfo(...args);
+		addLog("info", args);
+	};
+
+	console.warn = (...args: unknown[]) => {
+		originalWarn(...args);
+		addLog("warn", args);
+	};
+
+	console.error = (...args: unknown[]) => {
+		originalError(...args);
+		addLog("error", args);
+	};
+
+	isInitialized = true;
+	console.log("[ConsoleCapture] Initialized");
+}
+
+export function useConsoleCapture() {
+	const [logs, setLogs] = useState<LogEntry[]>(globalLogs);
 
 	useEffect(() => {
-		// Store original console methods
-		if (!originalConsole.current) {
-			originalConsole.current = {
-				log: console.log,
-				info: console.info,
-				warn: console.warn,
-				error: console.error,
-			};
-		}
+		initConsoleCapture();
 
-		const addLog = (level: LogEntry["level"], args: unknown[]) => {
-			const message = args
-				.map((arg) => {
-					if (typeof arg === "object") {
-						try {
-							return JSON.stringify(arg, null, 2);
-						} catch {
-							return String(arg);
-						}
-					}
-					return String(arg);
-				})
-				.join(" ");
+		const updateLogs = () => setLogs([...globalLogs]);
+		logListeners.add(updateLogs);
 
-			setLogs((prev) => {
-				const newLogs = [
-					...prev,
-					{
-						timestamp: new Date(),
-						level,
-						message,
-					},
-				];
-				// Keep only last maxLogs entries
-				return newLogs.slice(-maxLogs);
-			});
-		};
-
-		// Override console methods
-		console.log = (...args: unknown[]) => {
-			originalConsole.current?.log(...args);
-			addLog("log", args);
-		};
-
-		console.info = (...args: unknown[]) => {
-			originalConsole.current?.info(...args);
-			addLog("info", args);
-		};
-
-		console.warn = (...args: unknown[]) => {
-			originalConsole.current?.warn(...args);
-			addLog("warn", args);
-		};
-
-		console.error = (...args: unknown[]) => {
-			originalConsole.current?.error(...args);
-			addLog("error", args);
-		};
-
-		// Cleanup: restore original console methods
 		return () => {
-			if (originalConsole.current) {
-				console.log = originalConsole.current.log;
-				console.info = originalConsole.current.info;
-				console.warn = originalConsole.current.warn;
-				console.error = originalConsole.current.error;
-			}
+			logListeners.delete(updateLogs);
 		};
-	}, [maxLogs]);
+	}, []);
 
-	const clearLogs = () => setLogs([]);
+	const clearLogs = () => {
+		globalLogs = [];
+		setLogs([]);
+	};
 
 	const exportLogs = () => {
 		return logs

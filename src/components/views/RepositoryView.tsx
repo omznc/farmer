@@ -14,6 +14,7 @@ import type { Commit, WorkDay } from "../../types";
 import { CommitTimeline } from "../repository/CommitTimeline";
 import { RepositorySelector } from "../repository/RepositorySelector";
 import { Button } from "../ui/Button";
+import { Switch } from "../ui/Switch";
 
 const EMPTY_AUTHORS: string[] = [];
 
@@ -285,18 +286,15 @@ export function RepositoryView() {
 				</div>
 				<div className="flex items-center gap-4">
 					<label className="flex items-center gap-2 cursor-pointer">
-						<input
-							type="checkbox"
+						<Switch
 							checked={filterByGitAuthors}
-							onChange={(e) => {
-								const newValue = e.target.checked;
-								console.log("[Repository] Checkbox changed to:", newValue);
-								setFilterByGitAuthors(newValue);
+							onChange={(checked) => {
+								console.log("[Repository] Switch changed to:", checked);
+								setFilterByGitAuthors(checked);
 								if (reposToAnalyze.length > 0) {
-									handleAnalyzeRepositories(reposToAnalyze, newValue);
+									handleAnalyzeRepositories(reposToAnalyze, checked);
 								}
 							}}
-							className="w-4 h-4 rounded border-border bg-bg-tertiary text-accent focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-primary"
 						/>
 						<span className="text-sm text-fg-secondary">
 							Filter by authors{" "}

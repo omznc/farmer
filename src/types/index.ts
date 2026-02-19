@@ -53,7 +53,35 @@ export interface CopySettings {
 	includeDayTitle: boolean;
 }
 
+export interface DeepAnalysisSettings {
+	enabled: boolean;
+	maxFileSizeKB: number;
+	maxFilesPerCommit: number;
+}
+
+export interface AppState {
+	currentView: View;
+	repoPath: string | null;
+	repoHistory: string[];
+	activeRepos: string[];
+	filterByGitAuthors: boolean;
+	workSchedule: WorkSchedule;
+	aiConfig: AIConfig;
+	copySettings: CopySettings;
+	deepAnalysisSettings: DeepAnalysisSettings;
+	workDays: WorkDay[];
+	isLoading: boolean;
+	error: string | null;
+}
+
 export type View = "repository" | "settings" | "about";
+
+export interface FileDiff {
+	path: string;
+	additions: number;
+	deletions: number;
+	diff: string;
+}
 
 export interface AppState {
 	currentView: View;

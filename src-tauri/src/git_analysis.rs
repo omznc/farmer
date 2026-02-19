@@ -1,5 +1,148 @@
-use crate::types::{Commit, WorkDay};
+use crate::types::{Commit, FileDiff, WorkDay};
 use std::collections::HashMap;
+
+const IGNORED_EXTENSIONS: &[&str] = &[
+    ".min.js", ".min.css", ".map", ".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg", ".woff",
+    ".woff2", ".ttf", ".eot", ".pdf", ".zip", ".gz", ".tar", ".mp4", ".mp3", ".wav", ".avi",
+    ".mov", ".webm", ".lock", ".sum",
+];
+
+const IGNORED_PATHS: &[&str] = &[
+    "node_modules/",
+    "dist/",
+    "build/",
+    "target/",
+    ".git/",
+    "vendor/",
+    "__pycache__/",
+    ".venv/",
+    "venv/",
+];
+
+fn should_ignore_file(path: &str) -> bool {
+    let path_lower = path.to_lowercase();
+
+    for ext in IGNORED_EXTENSIONS {
+        if path_lower.ends_with(ext) {
+            return true;
+        }
+    }
+
+    for ignored_path in IGNORED_PATHS {
+        if path.contains(ignored_path) {
+            return true;
+        }
+    }
+
+    false
+}
+
+pub fn get_commit_diffs(
+    repo_path: &str,
+    commit_hash: &str,
+    max_file_size_kb: u32,
+    max_files: u32,
+) -> Result<Vec<FileDiff>, String> {
+    let repo = git2::Repository::open(repo_path)
+        .map_err(|e| format!("Failed to open repository: {}", e))?;
+
+    let oid =
+        git2::Oid::from_str(commit_hash).map_err(|e| format!("Invalid commit hash: {}", e))?;
+
+    let commit = repo
+        .find_commit(oid)
+        .map_err(|e| format!("Commit not found: {}", e))?;
+
+    let tree = commit
+        .tree()
+        .map_err(|e| format!("Failed to get commit tree: {}", e))?;
+
+    let mut diffs: Vec<FileDiff> = Vec::new();
+    let max_bytes = (max_file_size_kb as u64) * 1024;
+
+    if commit.parent_count() > 0 {
+        let parent = commit
+            .parent(0)
+            .map_err(|e| format!("Failed to get parent commit: {}", e))?;
+        let parent_tree = parent
+            .tree()
+            .map_err(|e| format!("Failed to get parent tree: {}", e))?;
+
+        let diff = repo
+            .diff_tree_to_tree(Some(&parent_tree), Some(&tree), None)
+            .map_err(|e| format!("Failed to compute diff: {}", e))?;
+
+        let mut file_count = 0u32;
+
+        for delta in diff.deltas() {
+            if file_count >= max_files {
+                break;
+            }
+
+            let path = if let Some(p) = delta.new_file().path() {
+                p.to_str().unwrap_or("").to_string()
+            } else if let Some(p) = delta.old_file().path() {
+                p.to_str().unwrap_or("").to_string()
+            } else {
+                continue;
+            };
+
+            if should_ignore_file(&path) {
+                continue;
+            }
+
+            let file_size = delta.new_file().size();
+            if file_size > max_bytes {
+                continue;
+            }
+
+            file_count += 1;
+
+            let mut additions = 0usize;
+            let mut deletions = 0usize;
+            let mut diff_text = String::new();
+
+            if let Ok(Some(patch)) = git2::Patch::from_diff(&diff, (delta.nfiles() - 1) as usize) {
+                let num_hunks = patch.num_hunks();
+                for hunk_idx in 0..num_hunks {
+                    if let Ok(num_lines) = patch.num_lines_in_hunk(hunk_idx) {
+                        for line_idx in 0..num_lines {
+                            if let Ok(line) = patch.line_in_hunk(hunk_idx, line_idx) {
+                                let prefix = match line.origin() {
+                                    '+' => {
+                                        additions += 1;
+                                        "+"
+                                    }
+                                    '-' => {
+                                        deletions += 1;
+                                        "-"
+                                    }
+                                    ' ' => " ",
+                                    _ => continue,
+                                };
+
+                                if let Ok(text) = std::str::from_utf8(line.content()) {
+                                    diff_text.push_str(&format!("{}{}\n", prefix, text.trim_end()));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if !diff_text.is_empty() {
+                diffs.push(FileDiff {
+                    path,
+                    additions,
+                    deletions,
+                    diff: diff_text,
+                });
+            }
+        }
+    }
+
+    Ok(diffs)
+}
 
 pub fn get_remote_url(repo_path: &str) -> Option<String> {
     let repo = git2::Repository::open(repo_path).ok()?;
@@ -30,8 +173,12 @@ pub fn analyze_repository(
     let should_filter = !git_authors.is_empty();
 
     let remote_url = get_remote_url(&repo_path);
-    println!("Analyzing repository: {} (remote: {:?}, filtering: {})",
-             repo_path, remote_url.as_deref().unwrap_or("none"), should_filter);
+    println!(
+        "Analyzing repository: {} (remote: {:?}, filtering: {})",
+        repo_path,
+        remote_url.as_deref().unwrap_or("none"),
+        should_filter
+    );
 
     for oid in revwalk {
         let oid = oid.map_err(|e| format!("Invalid OID: {}", e))?;
@@ -75,7 +222,11 @@ pub fn analyze_repository(
         });
     }
 
-    println!("Found {} commits for repository: {}", commits.len(), repo_path);
+    println!(
+        "Found {} commits for repository: {}",
+        commits.len(),
+        repo_path
+    );
 
     if commits.is_empty() {
         println!("Warning: No commits found in repository: {}", repo_path);
@@ -83,7 +234,11 @@ pub fn analyze_repository(
     }
 
     let work_days = group_commits_by_workday(commits);
-    println!("Grouped into {} work days for repository: {}", work_days.len(), repo_path);
+    println!(
+        "Grouped into {} work days for repository: {}",
+        work_days.len(),
+        repo_path
+    );
     Ok(work_days)
 }
 

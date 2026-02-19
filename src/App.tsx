@@ -7,7 +7,10 @@ import { TitleBar } from "./components/layout/TitleBar";
 import { AboutView } from "./components/views/AboutView";
 import { RepositoryView } from "./components/views/RepositoryView";
 import { SettingsView } from "./components/views/SettingsView";
+import { initConsoleCapture } from "./hooks/useConsoleCapture";
 import { useAppStore } from "./stores/appStore";
+
+initConsoleCapture();
 
 function App() {
 	const currentView = useAppStore((state) => state.currentView);
