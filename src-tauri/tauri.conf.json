@@ -58,6 +58,9 @@
 				},
 				"desktopTemplate": "../src-tauri/desktop-template.desktop"
 			}
+		},
+		"macOS": {
+			"signingIdentity": "-"
 		}
 	},
 	"plugins": {
