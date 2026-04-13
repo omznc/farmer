@@ -152,6 +152,22 @@ pub fn get_remote_url(repo_path: &str) -> Option<String> {
     url
 }
 
+pub fn fetch_repository(repo_path: &str) -> Result<(), String> {
+    let output = std::process::Command::new("git")
+        .current_dir(repo_path)
+        .args(["fetch", "--all", "--tags"])
+        .output()
+        .map_err(|e| format!("Failed to run git fetch: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("git fetch failed: {}", stderr));
+    }
+
+    println!("Fetched from all remotes in '{}'", repo_path);
+    Ok(())
+}
+
 pub fn analyze_repository(
     repo_path: String,
     git_authors: Vec<String>,

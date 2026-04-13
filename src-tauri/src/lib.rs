@@ -122,6 +122,26 @@ async fn get_commit_diffs(
     git_analysis::get_commit_diffs(&repo_path, &commit_hash, max_file_size_kb, max_files)
 }
 
+#[tauri::command]
+async fn fetch_repository(repo_path: String) -> Result<(), String> {
+    git_analysis::fetch_repository(&repo_path)
+}
+
+#[tauri::command]
+async fn fetch_all_repos(repo_paths: Vec<String>) -> Result<Vec<String>, String> {
+    let mut errors = Vec::new();
+    for path in &repo_paths {
+        if let Err(e) = git_analysis::fetch_repository(path) {
+            errors.push(format!("{}: {}", path, e));
+        }
+    }
+    if errors.is_empty() {
+        Ok(vec![])
+    } else {
+        Ok(errors)
+    }
+}
+
 fn get_settings_path() -> Result<PathBuf, String> {
     let config_dir = dirs::config_dir()
         .ok_or("Could not find config directory")?;
@@ -156,6 +176,8 @@ pub fn run() {
             load_settings,
             get_git_config,
             get_commit_diffs,
+            fetch_repository,
+            fetch_all_repos,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

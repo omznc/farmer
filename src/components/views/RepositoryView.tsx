@@ -206,7 +206,17 @@ export function RepositoryView() {
 		) {
 			hasAutoLoaded.current = true;
 			console.log("[Repository] Auto-loading repositories on mount");
-			handleAnalyzeRepositories(reposToAnalyze);
+			(async () => {
+				try {
+					await invoke<string[]>("fetch_all_repos", {
+						repoPaths: reposToAnalyze,
+					});
+					console.log("[Repository] Fetch completed on mount");
+				} catch (e) {
+					console.warn("[Repository] Fetch on mount failed:", e);
+				}
+				handleAnalyzeRepositories(reposToAnalyze);
+			})();
 		}
 	}, [
 		reposToAnalyze.length,
@@ -214,6 +224,29 @@ export function RepositoryView() {
 		handleAnalyzeRepositories,
 		reposToAnalyze,
 	]);
+
+	useEffect(() => {
+		if (reposToAnalyze.length === 0) return;
+
+		const FETCH_INTERVAL = 5 * 60 * 1000;
+		const intervalId = setInterval(async () => {
+			console.log("[Repository] Periodic fetch triggered");
+			try {
+				const errors = await invoke<string[]>("fetch_all_repos", {
+					repoPaths: reposToAnalyze,
+				});
+				if (errors.length > 0) {
+					console.warn("[Repository] Periodic fetch warnings:", errors);
+				} else {
+					console.log("[Repository] Periodic fetch completed successfully");
+				}
+			} catch (e) {
+				console.warn("[Repository] Periodic fetch failed:", e);
+			}
+		}, FETCH_INTERVAL);
+
+		return () => clearInterval(intervalId);
+	}, [reposToAnalyze]);
 
 	const handleSelectRepository = async (path: string) => {
 		addRepoToHistory(path);
@@ -224,8 +257,19 @@ export function RepositoryView() {
 		setShowSelector(false);
 	};
 
-	const handleRefresh = () => {
+	const handleRefresh = async () => {
 		if (reposToAnalyze.length > 0) {
+			setLoading(true);
+			try {
+				const errors = await invoke<string[]>("fetch_all_repos", {
+					repoPaths: reposToAnalyze,
+				});
+				if (errors.length > 0) {
+					console.warn("[Repository] Fetch warnings:", errors);
+				}
+			} catch (e) {
+				console.error("[Repository] Fetch failed:", e);
+			}
 			handleAnalyzeRepositories(reposToAnalyze);
 		}
 	};
