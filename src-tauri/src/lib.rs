@@ -2,6 +2,7 @@ mod git_analysis;
 mod types;
 
 use types::*;
+use FileDiff;
 use serde_json;
 use std::fs;
 use std::path::PathBuf;
@@ -29,6 +30,9 @@ async fn save_settings(
     repo_history: Option<Vec<String>>,
     active_repos: Option<Vec<String>>,
     filter_by_git_authors: Option<bool>,
+    copy_settings: Option<CopySettings>,
+    deep_analysis_settings: Option<DeepAnalysisSettings>,
+    konami_activated: Option<bool>,
 ) -> Result<(), String> {
     let settings_path = get_settings_path()?;
 
@@ -39,6 +43,9 @@ async fn save_settings(
         "repoHistory": repo_history,
         "activeRepos": active_repos,
         "filterByGitAuthors": filter_by_git_authors,
+        "copySettings": copy_settings,
+        "deepAnalysisSettings": deep_analysis_settings,
+        "konamiActivated": konami_activated,
     });
 
     fs::write(
@@ -102,7 +109,37 @@ async fn get_git_config() -> Result<Vec<String>, String> {
         }
     }
 
-    Ok(authors)
+	Ok(authors)
+}
+
+#[tauri::command]
+async fn get_commit_diffs(
+    repo_path: String,
+    commit_hash: String,
+    max_file_size_kb: u32,
+    max_files: u32,
+) -> Result<Vec<FileDiff>, String> {
+    git_analysis::get_commit_diffs(&repo_path, &commit_hash, max_file_size_kb, max_files)
+}
+
+#[tauri::command]
+async fn fetch_repository(repo_path: String) -> Result<(), String> {
+    git_analysis::fetch_repository(&repo_path)
+}
+
+#[tauri::command]
+async fn fetch_all_repos(repo_paths: Vec<String>) -> Result<Vec<String>, String> {
+    let mut errors = Vec::new();
+    for path in &repo_paths {
+        if let Err(e) = git_analysis::fetch_repository(path) {
+            errors.push(format!("{}: {}", path, e));
+        }
+    }
+    if errors.is_empty() {
+        Ok(vec![])
+    } else {
+        Ok(errors)
+    }
 }
 
 fn get_settings_path() -> Result<PathBuf, String> {
@@ -138,6 +175,9 @@ pub fn run() {
             save_settings,
             load_settings,
             get_git_config,
+            get_commit_diffs,
+            fetch_repository,
+            fetch_all_repos,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

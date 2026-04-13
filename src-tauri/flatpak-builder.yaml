@@ -1,0 +1,72 @@
+id: com.omznc.farmer
+
+runtime: org.gnome.Platform
+runtime-version: '48'
+sdk: org.gnome.Sdk
+
+command: farmer
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --share=ipc
+  - --share=network
+  - --filesystem=home
+  - --talk-name=org.freedesktop.Notifications
+
+modules:
+  - name: farmer
+    buildsystem: simple
+
+    sources:
+      - type: file
+        path: metainfo.xml
+      - type: file
+        path: ../target/release/bundle/deb/Farmer_amd64.deb
+        only-arches: [x86_64]
+        dest-filename: farmer.deb
+      - type: file
+        path: ../target/release/bundle/deb/Farmer_arm64.deb
+        only-arches: [aarch64]
+        dest-filename: farmer.deb
+
+    build-commands:
+      - set -e
+      - mkdir deb-extract
+      - ar -x *.deb --output deb-extract
+      - tar -C deb-extract -xf deb-extract/data.tar.gz
+      - install -Dm755 deb-extract/usr/bin/farmer /app/bin/farmer
+      - |
+        if [ -d deb-extract/usr/lib/Farmer ]; then
+          mkdir -p /app/lib/Farmer
+          cp -r deb-extract/usr/lib/Farmer/. /app/lib/Farmer
+          find /app/lib/Farmer -type f -exec chmod 644 {} \;
+        fi
+      - install -Dm644 deb-extract/usr/share/applications/Farmer.desktop /app/share/applications/com.omznc.farmer.desktop
+      - |
+        for size in 32 128 256; do
+          icon_path="deb-extract/usr/share/icons/hicolor/${size}x${size}/apps/farmer.png"
+          if [ -f "$icon_path" ]; then
+            install -Dm644 "$icon_path" "/app/share/icons/hicolor/${size}x${size}/apps/farmer.png"
+          fi
+        done
+        for size in 128 256; do
+          icon_path="deb-extract/usr/share/icons/hicolor/${size}x${size}@2/apps/farmer.png"
+          if [ -f "$icon_path" ]; then
+            install -Dm644 "$icon_path" "/app/share/icons/hicolor/${size}x${size}@2/apps/farmer.png"
+          fi
+        done
+      - install -Dm644 metainfo.xml /app/share/metainfo/com.omznc.farmer.metainfo.xml
+      - |
+        sed -i 's/^Icon=.*/Icon=com.omznc.farmer/' /app/share/applications/com.omznc.farmer.desktop
+        for size in 32 128 256; do
+          if [ -f "/app/share/icons/hicolor/${size}x${size}/apps/farmer.png" ]; then
+            mv "/app/share/icons/hicolor/${size}x${size}/apps/farmer.png" "/app/share/icons/hicolor/${size}x${size}/apps/com.omznc.farmer.png"
+          fi
+        done
+        for size in 128 256; do
+          if [ -f "/app/share/icons/hicolor/${size}x${size}@2/apps/farmer.png" ]; then
+            mv "/app/share/icons/hicolor/${size}x${size}@2/apps/farmer.png" "/app/share/icons/hicolor/${size}x${size}@2/apps/com.omznc.farmer.png"
+          fi
+        done

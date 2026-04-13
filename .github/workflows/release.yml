@@ -17,9 +17,9 @@ jobs:
                       args: --target aarch64-apple-darwin
                     - platform: macos-latest
                       args: --target x86_64-apple-darwin
-                    - platform: ubuntu-22.04
+                    - platform: ubuntu-24.04
                       args: ""
-                    - platform: ubuntu-22.04-arm
+                    - platform: ubuntu-24.04-arm
                       args: ""
                     - platform: windows-latest
                       args: ""
@@ -29,7 +29,7 @@ jobs:
             - uses: actions/checkout@v4
 
             - name: Install dependencies (Ubuntu only)
-              if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
+              if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm'
               run: |
                   sudo apt-get update
                   sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
@@ -62,3 +62,48 @@ jobs:
                   releaseDraft: true
                   prerelease: false
                   args: ${{ matrix.args }} --features vendored-openssl
+
+    flatpak:
+        needs: release
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Get version
+              id: version
+              run: |
+                  VERSION=$(grep '"version"' src-tauri/tauri.conf.json | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+                  echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+            - name: Download deb from release
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  mkdir -p target/release/bundle/deb
+                  gh release download v${{ steps.version.outputs.version }} --pattern "Farmer_*_amd64.deb" --dir target/release/bundle/deb/
+                  mv target/release/bundle/deb/Farmer_*_amd64.deb target/release/bundle/deb/Farmer_amd64.deb
+                  ls -la target/release/bundle/deb/
+
+            - name: Install flatpak-builder
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y flatpak flatpak-builder
+                  flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+            - name: Build Flatpak
+              run: |
+                  cd src-tauri
+                  flatpak-builder --user --install-deps-from=flathub --arch=x86_64 --force-clean build-dir flatpak-builder.yaml
+                  flatpak-builder --user --repo=repo --force-clean build-dir flatpak-builder.yaml
+                  flatpak build-bundle repo farmer.flatpak com.omznc.farmer
+
+            - name: Upload Flatpak to Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: src-tauri/farmer.flatpak
+                  tag_name: v${{ steps.version.outputs.version }}
+                  draft: true
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -7,13 +7,14 @@ import {
 	startOfWeek,
 	subWeeks,
 } from "date-fns";
-import { Calendar, Clock, FolderOpen, RefreshCw } from "lucide-react";
+import { Calendar, Clock, FolderOpen, RefreshCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAppStore } from "../../stores/appStore";
 import type { Commit, WorkDay } from "../../types";
 import { CommitTimeline } from "../repository/CommitTimeline";
 import { RepositorySelector } from "../repository/RepositorySelector";
 import { Button } from "../ui/Button";
+import { Switch } from "../ui/Switch";
 
 const EMPTY_AUTHORS: string[] = [];
 
@@ -63,6 +64,9 @@ export function RepositoryView() {
 	const activeRepos = useAppStore((state) => state.activeRepos);
 	const toggleActiveRepo = useAppStore((state) => state.toggleActiveRepo);
 	const addRepoToHistory = useAppStore((state) => state.addRepoToHistory);
+	const removeRepoFromHistory = useAppStore(
+		(state) => state.removeRepoFromHistory,
+	);
 	const isLoading = useAppStore((state) => state.isLoading);
 	const setLoading = useAppStore((state) => state.setLoading);
 	const setError = useAppStore((state) => state.setError);
@@ -202,7 +206,17 @@ export function RepositoryView() {
 		) {
 			hasAutoLoaded.current = true;
 			console.log("[Repository] Auto-loading repositories on mount");
-			handleAnalyzeRepositories(reposToAnalyze);
+			(async () => {
+				try {
+					await invoke<string[]>("fetch_all_repos", {
+						repoPaths: reposToAnalyze,
+					});
+					console.log("[Repository] Fetch completed on mount");
+				} catch (e) {
+					console.warn("[Repository] Fetch on mount failed:", e);
+				}
+				handleAnalyzeRepositories(reposToAnalyze);
+			})();
 		}
 	}, [
 		reposToAnalyze.length,
@@ -210,6 +224,29 @@ export function RepositoryView() {
 		handleAnalyzeRepositories,
 		reposToAnalyze,
 	]);
+
+	useEffect(() => {
+		if (reposToAnalyze.length === 0) return;
+
+		const FETCH_INTERVAL = 5 * 60 * 1000;
+		const intervalId = setInterval(async () => {
+			console.log("[Repository] Periodic fetch triggered");
+			try {
+				const errors = await invoke<string[]>("fetch_all_repos", {
+					repoPaths: reposToAnalyze,
+				});
+				if (errors.length > 0) {
+					console.warn("[Repository] Periodic fetch warnings:", errors);
+				} else {
+					console.log("[Repository] Periodic fetch completed successfully");
+				}
+			} catch (e) {
+				console.warn("[Repository] Periodic fetch failed:", e);
+			}
+		}, FETCH_INTERVAL);
+
+		return () => clearInterval(intervalId);
+	}, [reposToAnalyze]);
 
 	const handleSelectRepository = async (path: string) => {
 		addRepoToHistory(path);
@@ -220,8 +257,19 @@ export function RepositoryView() {
 		setShowSelector(false);
 	};
 
-	const handleRefresh = () => {
+	const handleRefresh = async () => {
 		if (reposToAnalyze.length > 0) {
+			setLoading(true);
+			try {
+				const errors = await invoke<string[]>("fetch_all_repos", {
+					repoPaths: reposToAnalyze,
+				});
+				if (errors.length > 0) {
+					console.warn("[Repository] Fetch warnings:", errors);
+				}
+			} catch (e) {
+				console.error("[Repository] Fetch failed:", e);
+			}
 			handleAnalyzeRepositories(reposToAnalyze);
 		}
 	};
@@ -282,18 +330,15 @@ export function RepositoryView() {
 				</div>
 				<div className="flex items-center gap-4">
 					<label className="flex items-center gap-2 cursor-pointer">
-						<input
-							type="checkbox"
+						<Switch
 							checked={filterByGitAuthors}
-							onChange={(e) => {
-								const newValue = e.target.checked;
-								console.log("[Repository] Checkbox changed to:", newValue);
-								setFilterByGitAuthors(newValue);
+							onChange={(checked) => {
+								console.log("[Repository] Switch changed to:", checked);
+								setFilterByGitAuthors(checked);
 								if (reposToAnalyze.length > 0) {
-									handleAnalyzeRepositories(reposToAnalyze, newValue);
+									handleAnalyzeRepositories(reposToAnalyze, checked);
 								}
 							}}
-							className="w-4 h-4 rounded border-border bg-bg-tertiary text-accent focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-primary"
 						/>
 						<span className="text-sm text-fg-secondary">
 							Filter by authors{" "}
@@ -502,6 +547,13 @@ export function RepositoryView() {
 											{name}
 										</span>
 									)}
+									<button
+										onClick={() => removeRepoFromHistory(path)}
+										className="p-1 text-fg-muted hover:text-error hover:bg-error/10 rounded transition-colors flex-shrink-0"
+										title="Remove from history"
+									>
+										<Trash2 className="w-4 h-4" />
+									</button>
 								</div>
 							);
 						})}

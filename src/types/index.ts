@@ -40,13 +40,24 @@ export interface AIProvider {
 	};
 }
 
+export type AIVerbosity = "concise" | "normal" | "detailed";
+
 export interface AIConfig {
 	providers: AIProvider[];
 	selectedProvider?: string;
 	customPrompt?: string;
+	verbosity?: AIVerbosity;
 }
 
-export type View = "repository" | "settings" | "about";
+export interface CopySettings {
+	includeDayTitle: boolean;
+}
+
+export interface DeepAnalysisSettings {
+	enabled: boolean;
+	maxFileSizeKB: number;
+	maxFilesPerCommit: number;
+}
 
 export interface AppState {
 	currentView: View;
@@ -56,6 +67,31 @@ export interface AppState {
 	filterByGitAuthors: boolean;
 	workSchedule: WorkSchedule;
 	aiConfig: AIConfig;
+	copySettings: CopySettings;
+	deepAnalysisSettings: DeepAnalysisSettings;
+	workDays: WorkDay[];
+	isLoading: boolean;
+	error: string | null;
+}
+
+export type View = "repository" | "settings" | "about" | "destroy_universe";
+
+export interface FileDiff {
+	path: string;
+	additions: number;
+	deletions: number;
+	diff: string;
+}
+
+export interface AppState {
+	currentView: View;
+	repoPath: string | null;
+	repoHistory: string[];
+	activeRepos: string[];
+	filterByGitAuthors: boolean;
+	workSchedule: WorkSchedule;
+	aiConfig: AIConfig;
+	copySettings: CopySettings;
 	workDays: WorkDay[];
 	isLoading: boolean;
 	error: string | null;

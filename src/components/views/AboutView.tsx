@@ -1,7 +1,11 @@
+import { getVersion } from "@tauri-apps/api/app";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import {
 	AlertCircle,
 	CheckCircle,
+	ChevronDown,
+	ChevronRight,
+	CircleDot,
 	Copy,
 	Download,
 	Github,
@@ -23,12 +27,16 @@ export function AboutView() {
 		downloadProgress,
 	} = useAutoUpdate(true); // Auto-check enabled
 
-	const { logs, clearLogs, exportLogs } = useConsoleCapture(500);
+	const { logs, clearLogs, exportLogs } = useConsoleCapture();
 	const [showLogs, setShowLogs] = useState(false);
 	const [copySuccess, setCopySuccess] = useState(false);
+	const [currentVersion, setCurrentVersion] = useState<string>("");
 	const logsEndRef = useRef<HTMLDivElement>(null);
 
-	const currentVersion = "0.1.1";
+	// Fetch version from Tauri config
+	useEffect(() => {
+		getVersion().then(setCurrentVersion).catch(console.error);
+	}, []);
 
 	// Auto-scroll to bottom when new logs arrive
 	useEffect(() => {
@@ -212,26 +220,26 @@ export function AboutView() {
 					</h4>
 					<ul className="space-y-2 text-sm text-fg-secondary">
 						<li className="flex items-start gap-2">
-							<span className="text-purple-500 mt-0.5">•</span>
+							<CircleDot className="w-3 h-3 text-purple-500 mt-1 flex-shrink-0" />
 							<span>Analyze Git repositories and group commits by workday</span>
 						</li>
 						<li className="flex items-start gap-2">
-							<span className="text-purple-500 mt-0.5">•</span>
+							<CircleDot className="w-3 h-3 text-purple-500 mt-1 flex-shrink-0" />
 							<span>
 								AI-powered summaries using Claude Code, OpenCode, OpenAI, or
 								Ollama
 							</span>
 						</li>
 						<li className="flex items-start gap-2">
-							<span className="text-purple-500 mt-0.5">•</span>
+							<CircleDot className="w-3 h-3 text-purple-500 mt-1 flex-shrink-0" />
 							<span>One-click copy to clipboard with commit URLs</span>
 						</li>
 						<li className="flex items-start gap-2">
-							<span className="text-purple-500 mt-0.5">•</span>
+							<CircleDot className="w-3 h-3 text-purple-500 mt-1 flex-shrink-0" />
 							<span>Filter commits by author for team repositories</span>
 						</li>
 						<li className="flex items-start gap-2">
-							<span className="text-purple-500 mt-0.5">•</span>
+							<CircleDot className="w-3 h-3 text-purple-500 mt-1 flex-shrink-0" />
 							<span>Automatic updates with manual check option</span>
 						</li>
 					</ul>
@@ -251,12 +259,18 @@ export function AboutView() {
 								Application Logs
 							</h3>
 							<p className="text-xs text-fg-muted mt-1">
-								{logs.length} log entries • Click to{" "}
-								{showLogs ? "hide" : "show"}
+								{logs.length} log entries <span className="mx-1">·</span> Click
+								to {showLogs ? "hide" : "show"}
 							</p>
 						</div>
 					</div>
-					<div className="text-xs text-fg-muted">{showLogs ? "▼" : "▶"}</div>
+					<div className="text-xs text-fg-muted">
+						{showLogs ? (
+							<ChevronDown className="w-4 h-4" />
+						) : (
+							<ChevronRight className="w-4 h-4" />
+						)}
+					</div>
 				</button>
 
 				{showLogs && (
@@ -339,6 +353,9 @@ export function AboutView() {
 				</a>
 				<p className="text-xs text-fg-muted">
 					Built with Rust and React (thanks Tauri)
+				</p>
+				<p className="text-[10px] text-fg-muted/30 select-none mt-2">
+					↑↑↓↓←→←→BA
 				</p>
 			</div>
 		</div>

@@ -1,4 +1,4 @@
-import { Folder, Info, type LucideIcon, Settings } from "lucide-react";
+import { Flame, Folder, Info, type LucideIcon, Settings } from "lucide-react";
 import { useAutoUpdate } from "../../hooks/useAutoUpdate";
 import { cn } from "../../lib/utils";
 import { useAppStore } from "../../stores/appStore";
@@ -24,11 +24,23 @@ const sidebarItems: SidebarItem[] = [
 	{ id: "about", label: "About", icon: Info, view: "about" },
 ];
 
+const destroyUniverseItem: SidebarItem = {
+	id: "destroy_universe",
+	label: "DESTROY_UNIVERSE",
+	icon: Flame,
+	view: "destroy_universe",
+};
+
 export function Sidebar() {
 	const currentView = useAppStore((state) => state.currentView);
 	const setCurrentView = useAppStore((state) => state.setCurrentView);
-	const { status } = useAutoUpdate(true); // Auto-check for updates
+	const konamiActivated = useAppStore((state) => state.konamiActivated);
+	const { status } = useAutoUpdate(true);
 	const hasUpdate = status === "available";
+
+	const allItems = konamiActivated
+		? [...sidebarItems, destroyUniverseItem]
+		: sidebarItems;
 
 	return (
 		<aside className="flex select-none w-56 flex-col border-r border-border bg-bg-secondary rounded-bl-lg overflow-hidden">
@@ -37,7 +49,7 @@ export function Sidebar() {
 			</div>
 
 			<nav className="flex-1 space-y-1 p-3 pb-3">
-				{sidebarItems.map((item) => (
+				{allItems.map((item) => (
 					<button
 						key={item.id}
 						onClick={() => setCurrentView(item.view)}
@@ -46,6 +58,8 @@ export function Sidebar() {
 							currentView === item.view
 								? "bg-bg-tertiary text-fg-primary"
 								: "text-fg-secondary hover:bg-bg-hover hover:text-fg-primary",
+							item.id === "destroy_universe" &&
+								"text-red-500 hover:text-red-400",
 						)}
 					>
 						<span className="flex items-center gap-3">

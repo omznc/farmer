@@ -1,6 +1,6 @@
 [package]
 name = "farmer"
-version = "0.1.0"
+version = "0.1.8"
 description = "Git-powered time tracking desktop application"
 authors = ["omznc"]
 edition = "2021"
@@ -13,7 +13,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["devtools"] }
+tauri = { version = "2", features = ["macos-private-api", "devtools"] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"

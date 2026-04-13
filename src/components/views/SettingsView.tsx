@@ -1,11 +1,17 @@
 import { invoke } from "@tauri-apps/api/core";
-import { Check, RefreshCw, Settings as SettingsIcon } from "lucide-react";
+import {
+	AlertTriangle,
+	Check,
+	RefreshCw,
+	Settings as SettingsIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { discoverProviders } from "../../lib/aiProviders";
 import { useAppStore } from "../../stores/appStore";
-import type { AIProvider } from "../../types";
+import type { AIProvider, AIVerbosity } from "../../types";
 import { PageWrapper } from "../layout/PageWrapper";
 import { Button } from "../ui/Button";
+import { Switch } from "../ui/Switch";
 
 const DAYS_OF_WEEK = [
 	"monday",
@@ -22,6 +28,15 @@ export function SettingsView() {
 	const setWorkSchedule = useAppStore((state) => state.setWorkSchedule);
 	const aiConfig = useAppStore((state) => state.aiConfig);
 	const setAIConfig = useAppStore((state) => state.setAIConfig);
+	const setAIVerbosity = useAppStore((state) => state.setAIVerbosity);
+	const copySettings = useAppStore((state) => state.copySettings);
+	const setCopySettings = useAppStore((state) => state.setCopySettings);
+	const deepAnalysisSettings = useAppStore(
+		(state) => state.deepAnalysisSettings,
+	);
+	const setDeepAnalysisSettings = useAppStore(
+		(state) => state.setDeepAnalysisSettings,
+	);
 	const [gitAuthors, setGitAuthors] = useState(
 		(workSchedule?.gitAuthors || []).join(", "),
 	);
@@ -263,6 +278,123 @@ export function SettingsView() {
 				</div>
 
 				<div className="rounded-lg border border-border bg-bg-secondary p-6">
+					<h3 className="text-sm font-medium text-fg-primary mb-4">
+						Copy Settings
+					</h3>
+
+					<div className="space-y-4">
+						<label className="flex items-center gap-3 cursor-pointer">
+							<Switch
+								checked={copySettings.includeDayTitle}
+								onChange={(checked) =>
+									setCopySettings({
+										...copySettings,
+										includeDayTitle: checked,
+									})
+								}
+							/>
+							<div>
+								<span className="text-sm font-medium text-fg-primary">
+									Include day title when copying
+								</span>
+								<p className="text-xs text-fg-muted mt-0.5">
+									Prepend the date (e.g., "Tuesday, February 17, 2026") to
+									copied text
+								</p>
+							</div>
+						</label>
+					</div>
+				</div>
+
+				<div className="rounded-lg border border-border bg-bg-secondary p-6">
+					<h3 className="text-sm font-medium text-fg-primary mb-4">
+						Deep Analysis
+					</h3>
+
+					<div className="space-y-4">
+						<label className="flex items-center gap-3 cursor-pointer">
+							<Switch
+								checked={deepAnalysisSettings.enabled}
+								onChange={(checked) =>
+									setDeepAnalysisSettings({
+										...deepAnalysisSettings,
+										enabled: checked,
+									})
+								}
+							/>
+							<div>
+								<span className="text-sm font-medium text-fg-primary">
+									Enable deep code analysis
+								</span>
+								<p className="text-xs text-fg-muted mt-0.5">
+									Include actual code changes in AI summaries for more detailed
+									analysis
+								</p>
+							</div>
+						</label>
+
+						{deepAnalysisSettings.enabled && (
+							<div className="p-3 rounded-md bg-yellow-500/10 border border-yellow-500/30">
+								<div className="flex items-start gap-2">
+									<AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+									<div className="text-xs text-yellow-200">
+										<p className="font-medium mb-1">Privacy & Cost Warning</p>
+										<ul className="list-disc list-inside space-y-0.5 text-yellow-200/80">
+											<li>Your code will be sent to the AI provider</li>
+											<li>This will use more tokens (higher cost)</li>
+											<li>
+												Binary files and large files are automatically excluded
+											</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+						)}
+
+						{deepAnalysisSettings.enabled && (
+							<div className="grid grid-cols-2 gap-4">
+								<div>
+									<label className="block text-xs font-medium text-fg-secondary mb-2">
+										Max file size (KB)
+									</label>
+									<input
+										type="number"
+										min={1}
+										max={500}
+										value={deepAnalysisSettings.maxFileSizeKB}
+										onChange={(e) =>
+											setDeepAnalysisSettings({
+												...deepAnalysisSettings,
+												maxFileSizeKB: Number(e.target.value) || 50,
+											})
+										}
+										className="w-full px-3 py-2 rounded-md border border-border bg-bg-tertiary text-sm text-fg-primary focus:outline-none focus:ring-2 focus:ring-accent"
+									/>
+								</div>
+								<div>
+									<label className="block text-xs font-medium text-fg-secondary mb-2">
+										Max files per commit
+									</label>
+									<input
+										type="number"
+										min={1}
+										max={100}
+										value={deepAnalysisSettings.maxFilesPerCommit}
+										onChange={(e) =>
+											setDeepAnalysisSettings({
+												...deepAnalysisSettings,
+												maxFilesPerCommit: Number(e.target.value) || 20,
+											})
+										}
+										className="w-full px-3 py-2 rounded-md border border-border bg-bg-tertiary text-sm text-fg-primary focus:outline-none focus:ring-2 focus:ring-accent"
+									/>
+								</div>
+							</div>
+						)}
+					</div>
+				</div>
+
+				<div className="rounded-lg border border-border bg-bg-secondary p-6">
 					<div className="flex items-center justify-between mb-4">
 						<h3 className="text-sm font-medium text-fg-primary flex items-center gap-2">
 							<SettingsIcon className="w-4 h-4" />
@@ -426,6 +558,35 @@ export function SettingsView() {
 								Add Provider
 							</Button>
 						</div>
+					</div>
+
+					<div className="mt-6 pt-6 border-t border-border">
+						<h4 className="text-xs font-medium text-fg-primary mb-3">
+							Summary Verbosity
+						</h4>
+						<div className="flex gap-2">
+							{(["concise", "normal", "detailed"] as AIVerbosity[]).map(
+								(level) => (
+									<button
+										key={level}
+										onClick={() => setAIVerbosity(level)}
+										className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors capitalize ${
+											(aiConfig.verbosity ?? "normal") === level
+												? "bg-accent text-black"
+												: "bg-bg-tertiary text-fg-secondary hover:bg-bg-hover"
+										}`}
+									>
+										{level}
+									</button>
+								),
+							)}
+						</div>
+						<p className="text-xs text-fg-muted mt-2">
+							<span className="font-medium">Concise:</span> 1 sentence.{" "}
+							<span className="font-medium">Normal:</span> 2-3 sentences.{" "}
+							<span className="font-medium">Detailed:</span> 4-5 sentences with
+							more context.
+						</p>
 					</div>
 
 					<div className="mt-6 pt-6 border-t border-border">

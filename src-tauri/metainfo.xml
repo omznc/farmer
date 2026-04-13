@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.omznc.farmer</id>
+  <name>Farmer</name>
+  <summary>Git-powered time tracking</summary>
+  <developer id="com.omznc">
+    <name>omznc</name>
+  </developer>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>
+      Farmer is a desktop application that automatically analyzes your git commits
+      to track work activity. It supports multi-repository tracking, AI-powered
+      time entry generation, and cross-platform usage.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Git Analysis: Automatically analyze your git commits to track work activity</li>
+      <li>Multi-Repository Support: Track commits across multiple repositories</li>
+      <li>AI Integration: Generate time entries and summaries using AI providers</li>
+      <li>Cross-Platform: Available for macOS, Linux, and Windows</li>
+      <li>Auto-Update: Built-in automatic update functionality</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">com.omznc.farmer.desktop</launchable>
+  <url type="homepage">https://github.com/omznc/farmer</url>
+  <url type="bugtracker">https://github.com/omznc/farmer/issues</url>
+  <screenshots>
+    <screenshot type="default">
+      <image type="source" width="1820" height="1077">https://raw.githubusercontent.com/omznc/farmer/main/public/screenshot.png</image>
+      <caption>Farmer main window showing git commit analysis</caption>
+    </screenshot>
+  </screenshots>
+  <categories>
+    <category>Office</category>
+    <category>Development</category>
+  </categories>
+  <keywords>
+    <keyword>git</keyword>
+    <keyword>time</keyword>
+    <keyword>tracking</keyword>
+    <keyword>productivity</keyword>
+    <keyword>development</keyword>
+  </keywords>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="0.1.5" date="2025-02-19">
+      <description>
+        <p>Added delete button for recent repositories, Flatpak support, and improved package metadata.</p>
+      </description>
+    </release>
+    <release version="0.1.4" date="2025-02-18">
+      <description>
+        <p>Initial release with core time tracking features.</p>
+      </description>
+    </release>
+  </releases>
+</component>

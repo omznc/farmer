@@ -54,6 +54,35 @@
 				}
 			]
 		},
+		{
+			"identifier": "shell:allow-spawn",
+			"allow": [
+				{
+					"name": "which",
+					"cmd": "which",
+					"args": true,
+					"sidecar": false
+				},
+				{
+					"name": "claude",
+					"cmd": "claude",
+					"args": true,
+					"sidecar": false
+				},
+				{
+					"name": "opencode",
+					"cmd": "opencode",
+					"args": true,
+					"sidecar": false
+				},
+				{
+					"name": "where",
+					"cmd": "where",
+					"args": true,
+					"sidecar": false
+				}
+			]
+		},
 		"updater:default",
 		"updater:allow-check",
 		"updater:allow-download",
